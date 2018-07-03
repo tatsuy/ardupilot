@@ -226,6 +226,8 @@ private:
     RC_Channel *channel_pitch;
     RC_Channel *channel_throttle;
     RC_Channel *channel_yaw;
+    RC_Channel *channel_forward;
+    RC_Channel *channel_lateral;
 
     // Dataflash
     DataFlash_Class DataFlash;

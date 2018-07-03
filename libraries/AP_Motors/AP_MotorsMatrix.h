@@ -55,7 +55,7 @@ protected:
     // add_motor using raw roll, pitch, throttle and yaw factors
     void                add_motor_raw(int8_t motor_num, float roll_fac, float pitch_fac, float yaw_fac, uint8_t testing_order);
 
-    void                add_motor_raw_6dof(int8_t motor_num, float roll_fac, float pitch_fac, float yaw_fac, float forward_fac, float lat_fac, uint8_t testing_order);
+    void                add_motor_raw_6dof(int8_t motor_num, float forward_fac, float lat_fac, float roll_fac, float pitch_fac, float yaw_fac, uint8_t testing_order);
 
     // add_motor using just position and yaw_factor (or prop direction)
     void                add_motor(int8_t motor_num, float angle_degrees, float yaw_factor, uint8_t testing_order);

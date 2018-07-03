@@ -352,7 +352,7 @@ void AP_MotorsMatrix::add_motor_raw(int8_t motor_num, float roll_fac, float pitc
     }
 }
 
-void AP_MotorsMatrix::add_motor_raw_6dof(int8_t motor_num, float roll_fac, float pitch_fac, float yaw_fac, float forward_fac, float lat_fac, uint8_t testing_order)
+void AP_MotorsMatrix::add_motor_raw_6dof(int8_t motor_num, float forward_fac, float lat_fac, float roll_fac, float pitch_fac, float yaw_fac, uint8_t testing_order)
 {
     //Parent takes care of enabling output and setting up masks
     add_motor_raw(motor_num, roll_fac, pitch_fac, yaw_fac, testing_order);

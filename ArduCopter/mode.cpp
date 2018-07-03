@@ -22,6 +22,8 @@ Copter::Mode::Mode(void) :
     channel_pitch(copter.channel_pitch),
     channel_throttle(copter.channel_throttle),
     channel_yaw(copter.channel_yaw),
+    channel_forward(copter.channel_forward),
+    channel_lateral(copter.channel_lateral),
     G_Dt(copter.G_Dt),
     ap(copter.ap),
     ekfGndSpdLimit(copter.ekfGndSpdLimit),

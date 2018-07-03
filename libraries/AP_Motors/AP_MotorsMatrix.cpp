@@ -138,6 +138,8 @@ void AP_MotorsMatrix::output_armed_stabilizing()
     uint8_t i;                          // general purpose counter
     float   roll_thrust;                // roll thrust input value, +/- 1.0
     float   pitch_thrust;               // pitch thrust input value, +/- 1.0
+    float   forward_thrust;
+    float   lateral_thrust;
     float   yaw_thrust;                 // yaw thrust input value, +/- 1.0
     float   throttle_thrust;            // throttle thrust input value, 0.0 - 1.0
     float   throttle_avg_max;           // throttle thrust average maximum value, 0.0 - 1.0
@@ -153,6 +155,8 @@ void AP_MotorsMatrix::output_armed_stabilizing()
     const float compensation_gain = get_compensation_gain();
     roll_thrust = _roll_in * compensation_gain;
     pitch_thrust = _pitch_in * compensation_gain;
+    forward_thrust = _forward_in * get_compensation_gain();
+    lateral_thrust = _lateral_in * get_compensation_gain();
     yaw_thrust = _yaw_in * compensation_gain;
     throttle_thrust = get_throttle() * compensation_gain;
     throttle_avg_max = _throttle_avg_max * compensation_gain;
@@ -188,7 +192,7 @@ void AP_MotorsMatrix::output_armed_stabilizing()
     // calculate the amount of yaw input that each motor can accept
     for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
         if (motor_enabled[i]) {
-            _thrust_rpyt_out[i] = roll_thrust * _roll_factor[i] + pitch_thrust * _pitch_factor[i];
+            _thrust_rpyt_out[i] = roll_thrust * _roll_factor[i] + pitch_thrust * _pitch_factor[i] + forward_thrust * _forward_factor[i] + lateral_thrust * _lateral_factor[i];
             if (!is_zero(_yaw_factor[i])){
                 if (yaw_thrust * _yaw_factor[i] > 0.0f) {
                     unused_range = fabsf(MAX(1.0f - (throttle_thrust_best_rpy + _thrust_rpyt_out[i]), 0.0f)/_yaw_factor[i]);
@@ -335,7 +339,7 @@ void AP_MotorsMatrix::add_motor_raw(int8_t motor_num, float roll_fac, float pitc
             motor_enabled[motor_num] = true;
         }
 
-        // set roll, pitch, thottle factors and opposite motor (for stability patch)
+        // set roll, pitch, throttle factors and opposite motor (for stability patch)
         _roll_factor[motor_num] = roll_fac;
         _pitch_factor[motor_num] = pitch_fac;
         _yaw_factor[motor_num] = yaw_fac;
@@ -346,6 +350,16 @@ void AP_MotorsMatrix::add_motor_raw(int8_t motor_num, float roll_fac, float pitc
         // call parent class method
         add_motor_num(motor_num);
     }
+}
+
+void AP_MotorsMatrix::add_motor_raw_6dof(int8_t motor_num, float roll_fac, float pitch_fac, float yaw_fac, float forward_fac, float lat_fac, uint8_t testing_order)
+{
+    //Parent takes care of enabling output and setting up masks
+    add_motor_raw(motor_num, roll_fac, pitch_fac, yaw_fac, testing_order);
+
+    //These are additional parameters for an ROV
+    _forward_factor[motor_num] = forward_fac;
+    _lateral_factor[motor_num] = lat_fac;
 }
 
 // add_motor using just position and prop direction - assumes that for each motor, roll and pitch factors are equal
@@ -375,6 +389,8 @@ void AP_MotorsMatrix::remove_motor(int8_t motor_num)
         _roll_factor[motor_num] = 0;
         _pitch_factor[motor_num] = 0;
         _yaw_factor[motor_num] = 0;
+        _forward_factor[motor_num] = 0;
+        _lateral_factor[motor_num] = 0;
     }
 }
 
@@ -641,12 +657,19 @@ void AP_MotorsMatrix::setup_motors(motor_frame_class frame_class, motor_frame_ty
             switch (frame_type) {
                 case MOTOR_FRAME_TYPE_Y6B:
                     // Y6 motor definition with all top motors spinning clockwise, all bottom motors counter clockwise
-                    add_motor_raw(AP_MOTORS_MOT_1, -1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  1);
-                    add_motor_raw(AP_MOTORS_MOT_2, -1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
-                    add_motor_raw(AP_MOTORS_MOT_3,  0.0f, -1.000f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  3);
-                    add_motor_raw(AP_MOTORS_MOT_4,  0.0f, -1.000f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
-                    add_motor_raw(AP_MOTORS_MOT_5,  1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
-                    add_motor_raw(AP_MOTORS_MOT_6,  1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
+//                    add_motor_raw(AP_MOTORS_MOT_1, -1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  1);
+//                    add_motor_raw(AP_MOTORS_MOT_2, -1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
+//                    add_motor_raw(AP_MOTORS_MOT_3,  0.0f, -1.000f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  3);
+//                    add_motor_raw(AP_MOTORS_MOT_4,  0.0f, -1.000f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
+//                    add_motor_raw(AP_MOTORS_MOT_5,  1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
+//                    add_motor_raw(AP_MOTORS_MOT_6,  1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
+//                    success = true;
+                    add_motor_raw_6dof(AP_MOTORS_MOT_1,  1.0f,  0.0f, -1.0f,  0.0f,  1.0f, 1);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_2,  1.0f,  0.0f,  1.0f,  0.0f, -1.0f, 2);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_3, -0.5f,  1.0f,  0.5f, -1.0f,  1.0f, 3);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_4, -0.5f,  1.0f, -0.5f,  1.0f, -1.0f, 4);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_5, -0.5f, -1.0f, -0.5f, -1.0f, -1.0f, 5);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_6, -0.5f, -1.0f,  0.5f,  1.0f,  1.0f, 6);
                     success = true;
                     break;
                 case MOTOR_FRAME_TYPE_Y6F:
@@ -688,6 +711,8 @@ void AP_MotorsMatrix::normalise_rpy_factors()
     float roll_fac = 0.0f;
     float pitch_fac = 0.0f;
     float yaw_fac = 0.0f;
+    float lat_fac = 0.0f;
+    float forward_fac = 0.0f;
 
     // find maximum roll, pitch and yaw factors
     for (uint8_t i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
@@ -700,6 +725,12 @@ void AP_MotorsMatrix::normalise_rpy_factors()
             }
             if (yaw_fac < fabsf(_yaw_factor[i])) {
                 yaw_fac = fabsf(_yaw_factor[i]);
+            }
+            if (lat_fac < fabsf(_lateral_factor[i])) {
+                lat_fac = fabsf(_lateral_factor[i]);
+            }
+            if (forward_fac < fabsf(_forward_factor[i])) {
+                forward_fac = fabsf(_forward_factor[i]);
             }
         }
     }
@@ -715,6 +746,12 @@ void AP_MotorsMatrix::normalise_rpy_factors()
             }
             if (!is_zero(yaw_fac)) {
                 _yaw_factor[i] = 0.5f*_yaw_factor[i]/yaw_fac;
+            }
+            if (!is_zero(lat_fac)) {
+                _lateral_factor[i] = 0.5f * _lateral_factor[i] / lat_fac;
+            }
+            if (!is_zero(forward_fac)) {
+                _forward_factor[i] = 0.5f * _forward_factor[i] / forward_fac;
             }
         }
     }

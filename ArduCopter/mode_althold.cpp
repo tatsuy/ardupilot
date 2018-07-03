@@ -31,9 +31,14 @@ void Copter::ModeAltHold::run()
     // apply SIMPLE mode transform to pilot inputs
     update_simple_mode();
 
-    // get pilot desired lean angles
     float target_roll, target_pitch;
-    get_pilot_desired_lean_angles(target_roll, target_pitch, copter.aparm.angle_max, attitude_control->get_althold_lean_angle_max());
+    if ((AP_Motors::motor_frame_class)g2.frame_class.get() != AP_Motors::MOTOR_FRAME_OMNI) {
+        // get pilot desired lean angles
+        get_pilot_desired_lean_angles(target_roll, target_pitch, copter.aparm.angle_max, attitude_control->get_althold_lean_angle_max());
+    } else {
+        target_roll = 0.0f;
+        target_pitch = 0.0f;
+    }
 
     // get pilot's desired yaw rate
     float target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
@@ -60,6 +65,12 @@ void Copter::ModeAltHold::run()
 
         motors->set_desired_spool_state(AP_Motors::DESIRED_SHUT_DOWN);
         attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
+
+        // fetch forward and lateral inputs
+        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI) {
+            attitude_control->set_forward_lateral(channel_forward->get_control_in(), channel_lateral->get_control_in(), (float)ROLL_PITCH_YAW_INPUT_MAX);
+        }
+
         attitude_control->reset_rate_controller_I_terms();
         attitude_control->set_yaw_target_to_current_heading();
 #if FRAME_CONFIG == HELI_FRAME    
@@ -102,6 +113,11 @@ void Copter::ModeAltHold::run()
         // call attitude controller
         attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
 
+        // fetch forward and lateral inputs
+        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI) {
+            attitude_control->set_forward_lateral(channel_forward->get_control_in(), channel_lateral->get_control_in(), (float)ROLL_PITCH_YAW_INPUT_MAX);
+        }
+
         // call position controller
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
         pos_control->add_takeoff_climb_rate(takeoff_climb_rate, G_Dt);
@@ -129,6 +145,12 @@ void Copter::ModeAltHold::run()
         attitude_control->set_yaw_target_to_current_heading();
 #endif
         attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
+
+        // fetch forward and lateral inputs
+        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI) {
+            attitude_control->set_forward_lateral(channel_forward->get_control_in(), channel_lateral->get_control_in(), (float)ROLL_PITCH_YAW_INPUT_MAX);
+        }
+
         pos_control->relax_alt_hold_controllers(0.0f);   // forces throttle output to go to zero
         pos_control->update_z_controller();
         break;
@@ -143,6 +165,11 @@ void Copter::ModeAltHold::run()
 
         // call attitude controller
         attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
+
+        // fetch forward and lateral inputs
+        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI) {
+            attitude_control->set_forward_lateral(channel_forward->get_control_in(), channel_lateral->get_control_in(), (float)ROLL_PITCH_YAW_INPUT_MAX);
+        }
 
         // adjust climb rate using rangefinder
         target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control->get_alt_target(), G_Dt);

@@ -358,10 +358,8 @@ void AP_MotorsMatrix::add_motor_raw_6dof(int8_t motor_num, float forward_fac, fl
     add_motor_raw(motor_num, roll_fac, pitch_fac, yaw_fac, testing_order);
 
     //These are additional parameters for an ROV
-//    _forward_factor[motor_num] = forward_fac;
-//    _lateral_factor[motor_num] = lat_fac;
-    _forward_factor[motor_num] = 0.0f;
-    _lateral_factor[motor_num] = 0.0f;
+    _forward_factor[motor_num] = forward_fac;
+    _lateral_factor[motor_num] = lat_fac;
 }
 
 // add_motor using just position and prop direction - assumes that for each motor, roll and pitch factors are equal

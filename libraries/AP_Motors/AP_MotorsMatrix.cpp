@@ -358,8 +358,10 @@ void AP_MotorsMatrix::add_motor_raw_6dof(int8_t motor_num, float forward_fac, fl
     add_motor_raw(motor_num, roll_fac, pitch_fac, yaw_fac, testing_order);
 
     //These are additional parameters for an ROV
-    _forward_factor[motor_num] = forward_fac;
-    _lateral_factor[motor_num] = lat_fac;
+//    _forward_factor[motor_num] = forward_fac;
+//    _lateral_factor[motor_num] = lat_fac;
+    _forward_factor[motor_num] = 0.0f;
+    _lateral_factor[motor_num] = 0.0f;
 }
 
 // add_motor using just position and prop direction - assumes that for each motor, roll and pitch factors are equal
@@ -496,12 +498,19 @@ void AP_MotorsMatrix::setup_motors(motor_frame_class frame_class, motor_frame_ty
                     success = true;
                     break;
                 case MOTOR_FRAME_TYPE_X:
-                    add_motor(AP_MOTORS_MOT_1,  90, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  2);
-                    add_motor(AP_MOTORS_MOT_2, -90, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 5);
-                    add_motor(AP_MOTORS_MOT_3, -30, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  6);
-                    add_motor(AP_MOTORS_MOT_4, 150, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 3);
-                    add_motor(AP_MOTORS_MOT_5,  30, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 1);
-                    add_motor(AP_MOTORS_MOT_6,-150, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  4);
+//                    add_motor(AP_MOTORS_MOT_1,  90, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  2);
+//                    add_motor(AP_MOTORS_MOT_2, -90, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 5);
+//                    add_motor(AP_MOTORS_MOT_3, -30, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  6);
+//                    add_motor(AP_MOTORS_MOT_4, 150, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 3);
+//                    add_motor(AP_MOTORS_MOT_5,  30, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 1);
+//                    add_motor(AP_MOTORS_MOT_6,-150, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  4);
+//                    success = true;
+                    add_motor_raw_6dof(AP_MOTORS_MOT_1,  1.0f,  0.0f, -1.0f,  0.0f,  1.0f, 1);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_2,  1.0f,  0.0f,  1.0f,  0.0f, -1.0f, 2);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_3, -0.5f,  1.0f,  0.5f, -1.0f,  1.0f, 3);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_4, -0.5f,  1.0f, -0.5f,  1.0f, -1.0f, 4);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_5, -0.5f, -1.0f, -0.5f, -1.0f, -1.0f, 5);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_6, -0.5f, -1.0f,  0.5f,  1.0f,  1.0f, 6);
                     success = true;
                     break;
                 default:
@@ -657,19 +666,12 @@ void AP_MotorsMatrix::setup_motors(motor_frame_class frame_class, motor_frame_ty
             switch (frame_type) {
                 case MOTOR_FRAME_TYPE_Y6B:
                     // Y6 motor definition with all top motors spinning clockwise, all bottom motors counter clockwise
-//                    add_motor_raw(AP_MOTORS_MOT_1, -1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  1);
-//                    add_motor_raw(AP_MOTORS_MOT_2, -1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
-//                    add_motor_raw(AP_MOTORS_MOT_3,  0.0f, -1.000f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  3);
-//                    add_motor_raw(AP_MOTORS_MOT_4,  0.0f, -1.000f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
-//                    add_motor_raw(AP_MOTORS_MOT_5,  1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
-//                    add_motor_raw(AP_MOTORS_MOT_6,  1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
-//                    success = true;
-                    add_motor_raw_6dof(AP_MOTORS_MOT_1,  1.0f,  0.0f, -1.0f,  0.0f,  1.0f, 1);
-                    add_motor_raw_6dof(AP_MOTORS_MOT_2,  1.0f,  0.0f,  1.0f,  0.0f, -1.0f, 2);
-                    add_motor_raw_6dof(AP_MOTORS_MOT_3, -0.5f,  1.0f,  0.5f, -1.0f,  1.0f, 3);
-                    add_motor_raw_6dof(AP_MOTORS_MOT_4, -0.5f,  1.0f, -0.5f,  1.0f, -1.0f, 4);
-                    add_motor_raw_6dof(AP_MOTORS_MOT_5, -0.5f, -1.0f, -0.5f, -1.0f, -1.0f, 5);
-                    add_motor_raw_6dof(AP_MOTORS_MOT_6, -0.5f, -1.0f,  0.5f,  1.0f,  1.0f, 6);
+                    add_motor_raw(AP_MOTORS_MOT_1, -1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  1);
+                    add_motor_raw(AP_MOTORS_MOT_2, -1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
+                    add_motor_raw(AP_MOTORS_MOT_3,  0.0f, -1.000f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  3);
+                    add_motor_raw(AP_MOTORS_MOT_4,  0.0f, -1.000f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
+                    add_motor_raw(AP_MOTORS_MOT_5,  1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
+                    add_motor_raw(AP_MOTORS_MOT_6,  1.0f,  0.500f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
                     success = true;
                     break;
                 case MOTOR_FRAME_TYPE_Y6F:

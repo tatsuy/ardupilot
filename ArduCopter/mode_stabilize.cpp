@@ -22,7 +22,7 @@ bool Copter::ModeStabilize::init(bool ignore_checks)
 // should be called at 100hz or more
 void Copter::ModeStabilize::run()
 {
-    float target_roll, target_pitch;
+    float target_roll = 0.0f, target_pitch = 0.0f;
     float target_yaw_rate;
     float pilot_throttle_scaled;
 
@@ -43,7 +43,11 @@ void Copter::ModeStabilize::run()
     AP_Vehicle::MultiCopter &aparm = copter.aparm;
 
     // convert pilot input to lean angles
-    get_pilot_desired_lean_angles(target_roll, target_pitch, aparm.angle_max, aparm.angle_max);
+    //get_pilot_desired_lean_angles(target_roll, target_pitch, aparm.angle_max, aparm.angle_max);
+
+    // fetch forward and lateral inputs
+    float target_forward = channel_forward->get_control_in();
+    float target_lateral = channel_lateral->get_control_in();
 
     // get pilot's desired yaw rate
     target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
@@ -53,6 +57,8 @@ void Copter::ModeStabilize::run()
 
     // call attitude controller
     attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
+
+    attitude_control->set_forward_lateral(target_forward, target_lateral);
 
     // body-frame rate controller is run directly from 100hz loop
 

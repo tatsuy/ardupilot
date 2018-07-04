@@ -152,6 +152,8 @@ public:
     // Run angular velocity controller and send outputs to the motors
     virtual void rate_controller_run() = 0;
 
+    virtual void set_forward_lateral(float target_forward, float target_lateral);
+
     // Convert a 321-intrinsic euler angle derivative to an angular velocity vector
     void euler_rate_to_ang_vel(const Vector3f& euler_rad, const Vector3f& euler_rate_rads, Vector3f& ang_vel_rads);
 

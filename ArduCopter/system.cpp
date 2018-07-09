@@ -448,6 +448,7 @@ MAV_TYPE Copter::get_frame_mav_type()
             return MAV_TYPE_QUADROTOR;
         case AP_Motors::MOTOR_FRAME_HEXA:
         case AP_Motors::MOTOR_FRAME_Y6:
+        case AP_Motors::MOTOR_FRAME_OMNI:
             return MAV_TYPE_HEXAROTOR;
         case AP_Motors::MOTOR_FRAME_OCTA:
         case AP_Motors::MOTOR_FRAME_OCTAQUAD:
@@ -479,6 +480,8 @@ const char* Copter::get_frame_string()
             return "HEXA";
         case AP_Motors::MOTOR_FRAME_Y6:
             return "Y6";
+        case AP_Motors::MOTOR_FRAME_OMNI:
+            return "OMNI";
         case AP_Motors::MOTOR_FRAME_OCTA:
             return "OCTA";
         case AP_Motors::MOTOR_FRAME_OCTAQUAD:

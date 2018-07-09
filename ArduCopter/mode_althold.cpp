@@ -31,9 +31,14 @@ void Copter::ModeAltHold::run()
     // apply SIMPLE mode transform to pilot inputs
     update_simple_mode();
 
-    // get pilot desired lean angles
     float target_roll, target_pitch;
-    get_pilot_desired_lean_angles(target_roll, target_pitch, copter.aparm.angle_max, attitude_control->get_althold_lean_angle_max());
+    if ((AP_Motors::motor_frame_class)g2.frame_class.get() != AP_Motors::MOTOR_FRAME_OMNI) {
+        // get pilot desired lean angles
+        get_pilot_desired_lean_angles(target_roll, target_pitch, copter.aparm.angle_max, attitude_control->get_althold_lean_angle_max());
+    } else {
+        target_roll = 0.0f;
+        target_pitch = 0.0f;
+    }
 
     // get pilot's desired yaw rate
     float target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
@@ -101,6 +106,14 @@ void Copter::ModeAltHold::run()
 
         // call attitude controller
         attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
+
+        // fetch forward and lateral inputs
+        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI) {
+            float target_forward = channel_forward->get_control_in();
+            float target_lateral = channel_lateral->get_control_in();
+
+            attitude_control->set_forward_lateral(target_forward, target_lateral);
+        }
 
         // call position controller
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);

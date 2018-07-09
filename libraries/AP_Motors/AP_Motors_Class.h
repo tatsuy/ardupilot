@@ -44,6 +44,7 @@ public:
         MOTOR_FRAME_HELI_DUAL = 11,
         MOTOR_FRAME_DODECAHEXA = 12,
         MOTOR_FRAME_HELI_QUAD = 13,
+        MOTOR_FRAME_OMNI = 14,
     };
     enum motor_frame_type {
         MOTOR_FRAME_TYPE_PLUS = 0,
@@ -53,7 +54,7 @@ public:
         MOTOR_FRAME_TYPE_VTAIL = 4,
         MOTOR_FRAME_TYPE_ATAIL = 5,
         MOTOR_FRAME_TYPE_Y6B = 10,
-        MOTOR_FRAME_TYPE_Y6F = 11 // for FireFlyY6
+        MOTOR_FRAME_TYPE_Y6F = 11, // for FireFlyY6
     };
 
     // Constructor

@@ -33,6 +33,8 @@ void Copter::init_rc_in()
     channel_pitch->set_angle(ROLL_PITCH_YAW_INPUT_MAX);
     channel_yaw->set_angle(ROLL_PITCH_YAW_INPUT_MAX);
     channel_throttle->set_range(1000);
+    channel_forward->set_range(1000);
+    channel_forward->set_range(1000);
 
     //set auxiliary servo ranges
     RC_Channels::rc_channel(CH_5)->set_range(1000);

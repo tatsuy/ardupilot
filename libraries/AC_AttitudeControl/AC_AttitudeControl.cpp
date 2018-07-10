@@ -293,8 +293,8 @@ void AC_AttitudeControl::input_euler_angle_roll_pitch_euler_rate_yaw(float euler
 
 void AC_AttitudeControl::set_forward_lateral(float target_forward, float target_lateral)
 {
-    _motors.set_forward(target_forward / 4500.0f);
-    _motors.set_lateral(target_lateral / 4500.0f);
+    _motors.set_forward(target_forward);
+    _motors.set_lateral(target_lateral);
 }
 
 // Command an euler roll, pitch and yaw angle with angular velocity feedforward and smoothing

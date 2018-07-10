@@ -62,8 +62,8 @@ void Copter::ModeStabilize::run()
 
     // fetch forward and lateral inputs
     if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI) {
-        float target_forward = channel_forward->get_control_in();
-        float target_lateral = channel_lateral->get_control_in();
+        float target_forward = channel_forward->get_control_in() / (float)FORWARD_LATERAL_INPUT_MAX;
+        float target_lateral = channel_lateral->get_control_in() / (float)FORWARD_LATERAL_INPUT_MAX;
 
         attitude_control->set_forward_lateral(target_forward, target_lateral);
     }

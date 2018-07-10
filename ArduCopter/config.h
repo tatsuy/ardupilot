@@ -550,6 +550,9 @@
 #ifndef ANGLE_RATE_MAX
  # define ANGLE_RATE_MAX            18000           // default maximum rotation rate in roll/pitch axis requested by angle controller used in stabilize, loiter, rtl, auto flight modes
 #endif
+#ifndef FORWARD_LATERAL_INPUT_MAX
+ # define FORWARD_LATERAL_INPUT_MAX      1000        // forward and lateral input range
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // Stop mode defaults

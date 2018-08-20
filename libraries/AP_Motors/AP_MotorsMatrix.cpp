@@ -363,12 +363,28 @@ void AP_MotorsMatrix::add_motor_raw(int8_t motor_num, float roll_fac, float pitc
 
 void AP_MotorsMatrix::add_motor_raw_6dof(int8_t motor_num, float forward_fac, float lat_fac, float roll_fac, float pitch_fac, float yaw_fac, uint8_t testing_order)
 {
-    //Parent takes care of enabling output and setting up masks
-    add_motor_raw(motor_num, roll_fac, pitch_fac, yaw_fac, testing_order);
+    // ensure valid motor number is provided
+    if( motor_num >= 0 && motor_num < AP_MOTORS_MAX_NUM_MOTORS ) {
 
-    //These are additional parameters for an omni copter
-    _forward_factor[motor_num] = forward_fac;
-    _lateral_factor[motor_num] = lat_fac;
+        // increment number of motors if this motor is being newly motor_enabled
+        if( !motor_enabled[motor_num] ) {
+            motor_enabled[motor_num] = true;
+        }
+
+        // set roll, pitch, thottle factors and opposite motor (for stability patch)
+        _roll_factor[motor_num] = roll_fac;
+        _pitch_factor[motor_num] = pitch_fac;
+        _yaw_factor[motor_num] = yaw_fac;
+        //These are additional parameters for an omni copter
+        _forward_factor[motor_num] = forward_fac;
+        _lateral_factor[motor_num] = lat_fac;
+
+        // set order that motor appears in test
+        _test_order[motor_num] = testing_order;
+
+        // call parent class method
+        add_motor_num(motor_num);
+    }
 }
 
 // add_motor using just position and prop direction - assumes that for each motor, roll and pitch factors are equal
@@ -696,15 +712,29 @@ void AP_MotorsMatrix::setup_motors(motor_frame_class frame_class, motor_frame_ty
             }
             break;
 
-        case MOTOR_FRAME_OMNI:
+        case MOTOR_FRAME_OMNI_HEXA:
             switch (frame_type) {
                 case MOTOR_FRAME_TYPE_X:
-                    add_motor_raw_6dof(AP_MOTORS_MOT_1, -1.0f,  0.0f, -1.0f,  0.0f, -1.0f, 1);
-                    add_motor_raw_6dof(AP_MOTORS_MOT_2, -1.0f,  0.0f,  1.0f,  0.0f,  1.0f, 2);
-                    add_motor_raw_6dof(AP_MOTORS_MOT_3,  0.5f, -1.0f,  0.5f,  1.0f, -1.0f, 3);
-                    add_motor_raw_6dof(AP_MOTORS_MOT_4,  0.5f, -1.0f, -0.5f, -1.0f,  1.0f, 4);
-                    add_motor_raw_6dof(AP_MOTORS_MOT_5,  0.5f,  1.0f, -0.5f,  1.0f,  1.0f, 5);
-                    add_motor_raw_6dof(AP_MOTORS_MOT_6,  0.5f,  1.0f,  0.5f, -1.0f, -1.0f, 6);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_1, -1.0f,  0.0f, -1.0f,  0.0f, -1.0f, 2);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_2, -1.0f,  0.0f,  1.0f,  0.0f,  1.0f, 5);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_3,  0.5f, -1.0f,  0.5f,  1.0f, -1.0f, 6);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_4,  0.5f, -1.0f, -0.5f, -1.0f,  1.0f, 3);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_5,  0.5f,  1.0f, -0.5f,  1.0f,  1.0f, 1);
+                    add_motor_raw_6dof(AP_MOTORS_MOT_6,  0.5f,  1.0f,  0.5f, -1.0f, -1.0f, 4);
+
+//                    add_motor_raw_6dof(AP_MOTORS_MOT_1, -0.5735764f,  0.0000000f, -0.8191520f,  0.0000000f, -0.5735764f, 2);
+//                    add_motor_raw_6dof(AP_MOTORS_MOT_2, -0.5735764f,  0.0000000f,  0.8191520f,  0.0000000f,  0.5735764f, 5);
+//                    add_motor_raw_6dof(AP_MOTORS_MOT_3,  0.2867882f, -0.4967318f,  0.4095760f,  0.7094065f, -0.5735764f, 6);
+//                    add_motor_raw_6dof(AP_MOTORS_MOT_4,  0.2867882f, -0.4967318f, -0.4095760f, -0.7094065f,  0.5735764f, 3);
+//                    add_motor_raw_6dof(AP_MOTORS_MOT_5,  0.2867882f,  0.4967318f, -0.4095760f,  0.7094065f,  0.5735764f, 1);
+//                    add_motor_raw_6dof(AP_MOTORS_MOT_6,  0.2867882f,  0.4967318f,  0.4095760f, -0.7094065f, -0.5735764f, 4);
+
+//                    add_motor_raw_6dof(AP_MOTORS_MOT_1, -0.50f,  0.000000f, -0.411987f,  0.013506f, -0.237861f, 2);
+//                    add_motor_raw_6dof(AP_MOTORS_MOT_2, -0.50f,  0.000000f,  0.411987f,  0.013506f,  0.237861f, 5);
+//                    add_motor_raw_6dof(AP_MOTORS_MOT_3,  0.25f, -0.433013f,  0.217690f,  0.350038f, -0.237861f, 6);
+//                    add_motor_raw_6dof(AP_MOTORS_MOT_4,  0.25f, -1.433013f, -0.194297f, -0.363544f,  0.237861f, 3);
+//                    add_motor_raw_6dof(AP_MOTORS_MOT_5,  0.25f,  0.433013f, -0.217690f,  0.350038f,  0.237861f, 1);
+//                    add_motor_raw_6dof(AP_MOTORS_MOT_6,  0.25f,  0.433013f,  0.194297f, -0.363544f, -0.237861f, 4);
                     success = true;
                     break;
             default:
@@ -712,6 +742,25 @@ void AP_MotorsMatrix::setup_motors(motor_frame_class frame_class, motor_frame_ty
                 break;
             }
             break;
+
+       case MOTOR_FRAME_OMNI_OCTA:
+           switch (frame_type) {
+               case MOTOR_FRAME_TYPE_X:
+                   add_motor_raw_6dof(AP_MOTORS_MOT_1, -0.5f,  1.0f, -0.5f,   1.0f,  -1.0f,  1);
+                   add_motor_raw_6dof(AP_MOTORS_MOT_2,  0.5f, -1.0f,  0.5f,  -1.0f,  -1.0f,  5);
+                   add_motor_raw_6dof(AP_MOTORS_MOT_3,  1.0f, -0.5f, -1.0f,   0.5f,   1.0f,  2);
+                   add_motor_raw_6dof(AP_MOTORS_MOT_4,  0.5f,  1.0f, -0.5f,  -1.0f,   1.0f,  4);
+                   add_motor_raw_6dof(AP_MOTORS_MOT_5, -0.5f, -1.0f,  0.5f,   1.0f,   1.0f,  8);
+                   add_motor_raw_6dof(AP_MOTORS_MOT_6, -1.0f,  0.5f,  1.0f,  -0.5f,   1.0f,  6);
+                   add_motor_raw_6dof(AP_MOTORS_MOT_7,  1.0f,  0.5f,  1.0f,   0.5f,  -1.0f,  7);
+                   add_motor_raw_6dof(AP_MOTORS_MOT_8, -1.0f, -0.5f, -1.0f,  -0.5f,  -1.0f,  3);
+                   success = true;
+                   break;
+               default:
+                   // omni frame class does not support this frame type
+                   break;
+             }
+             break;
 
         default:
             // matrix doesn't support the configured class

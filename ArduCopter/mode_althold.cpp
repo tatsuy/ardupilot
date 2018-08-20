@@ -32,7 +32,8 @@ void Copter::ModeAltHold::run()
     update_simple_mode();
 
     float target_roll, target_pitch;
-    if ((AP_Motors::motor_frame_class)g2.frame_class.get() != AP_Motors::MOTOR_FRAME_OMNI) {
+    if ((AP_Motors::motor_frame_class)g2.frame_class.get() != AP_Motors::MOTOR_FRAME_OMNI_HEXA &&
+            (AP_Motors::motor_frame_class)g2.frame_class.get() != AP_Motors::MOTOR_FRAME_OMNI_OCTA) {
         // get pilot desired lean angles
         get_pilot_desired_lean_angles(target_roll, target_pitch, copter.aparm.angle_max, attitude_control->get_althold_lean_angle_max());
     } else {
@@ -67,7 +68,8 @@ void Copter::ModeAltHold::run()
         attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
 
         // fetch forward and lateral inputs
-        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI) {
+        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI_HEXA ||
+                (AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI_OCTA) {
             attitude_control->set_forward_lateral(channel_forward->get_control_in(), channel_lateral->get_control_in(), (float)ROLL_PITCH_YAW_INPUT_MAX);
         }
 
@@ -114,7 +116,8 @@ void Copter::ModeAltHold::run()
         attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
 
         // fetch forward and lateral inputs
-        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI) {
+        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI_HEXA ||
+                (AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI_OCTA) {
             attitude_control->set_forward_lateral(channel_forward->get_control_in(), channel_lateral->get_control_in(), (float)ROLL_PITCH_YAW_INPUT_MAX);
         }
 
@@ -147,7 +150,8 @@ void Copter::ModeAltHold::run()
         attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
 
         // fetch forward and lateral inputs
-        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI) {
+        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI_HEXA ||
+                (AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI_OCTA) {
             attitude_control->set_forward_lateral(channel_forward->get_control_in(), channel_lateral->get_control_in(), (float)ROLL_PITCH_YAW_INPUT_MAX);
         }
 
@@ -167,7 +171,8 @@ void Copter::ModeAltHold::run()
         attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
 
         // fetch forward and lateral inputs
-        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI) {
+        if ((AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI_HEXA ||
+                (AP_Motors::motor_frame_class)g2.frame_class.get() == AP_Motors::MOTOR_FRAME_OMNI_OCTA) {
             attitude_control->set_forward_lateral(channel_forward->get_control_in(), channel_lateral->get_control_in(), (float)ROLL_PITCH_YAW_INPUT_MAX);
         }
 

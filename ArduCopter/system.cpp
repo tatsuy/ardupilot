@@ -446,7 +446,8 @@ MAV_TYPE Copter::get_frame_mav_type()
             return MAV_TYPE_QUADROTOR;
         case AP_Motors::MOTOR_FRAME_HEXA:
         case AP_Motors::MOTOR_FRAME_Y6:
-        case AP_Motors::MOTOR_FRAME_OMNI:
+        case AP_Motors::MOTOR_FRAME_OMNI_HEXA:
+        case AP_Motors::MOTOR_FRAME_OMNI_OCTA:
             return MAV_TYPE_HEXAROTOR;
         case AP_Motors::MOTOR_FRAME_OCTA:
         case AP_Motors::MOTOR_FRAME_OCTAQUAD:
@@ -478,8 +479,10 @@ const char* Copter::get_frame_string()
             return "HEXA";
         case AP_Motors::MOTOR_FRAME_Y6:
             return "Y6";
-        case AP_Motors::MOTOR_FRAME_OMNI:
-            return "OMNI";
+        case AP_Motors::MOTOR_FRAME_OMNI_HEXA:
+            return "OMNI_HEXA";
+        case AP_Motors::MOTOR_FRAME_OMNI_OCTA:
+            return "OMNI_OCTA";
         case AP_Motors::MOTOR_FRAME_OCTA:
             return "OCTA";
         case AP_Motors::MOTOR_FRAME_OCTAQUAD:
@@ -540,7 +543,8 @@ void Copter::allocate_motors(void)
             motors = new AP_MotorsTailsitter(copter.scheduler.get_loop_rate_hz());
             motors_var_info = AP_MotorsTailsitter::var_info;
             break;
-        case AP_Motors::MOTOR_FRAME_OMNI:
+        case AP_Motors::MOTOR_FRAME_OMNI_HEXA:
+        case AP_Motors::MOTOR_FRAME_OMNI_OCTA:
             motors = new AP_MotorsMatrix(copter.scheduler.get_loop_rate_hz());
             motors_var_info = AP_MotorsMatrix::var_info;
             AP_Param::set_frame_type_flags(AP_PARAM_FRAME_OMNICOPTER);

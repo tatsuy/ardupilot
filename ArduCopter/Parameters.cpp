@@ -918,6 +918,22 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("TUNE_MAX", 32, ParametersG2, tuning_max, 0),
 
+    // @Param: RNGFND_ROLL
+    // @DisplayName: Roll angle of rangefinder
+    // @Description: Roll angle of down
+    // @Units: degree
+    // @Range: -60 60
+    // @User: Standard
+    AP_GROUPINFO("RNGFND_ROLL", 33, ParametersG2, rngfnd_roll, 0),
+
+    // @Param: RNGFND_PITCH
+    // @DisplayName: Pitch angle of rangefinder
+    // @Description: Pitch angle of down
+    // @Units: degree
+    // @Range: -60 60
+    // @User: Standard
+    AP_GROUPINFO("RNGFND_PITCH", 34, ParametersG2, rngfnd_pitch, 0),
+
     AP_GROUPEND
 };
 

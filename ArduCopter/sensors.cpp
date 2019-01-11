@@ -32,7 +32,11 @@ void Copter::read_rangefinder(void)
 
  #if RANGEFINDER_TILT_CORRECTION == ENABLED
     // correct alt for angle of the rangefinder
-    temp_alt = (float)temp_alt * MAX(0.707f, ahrs.get_rotation_body_to_ned().c.z);
+    Vector3f euler;
+    ahrs.get_secondary_attitude(euler);
+    float temp = cosf((degrees(euler.y)+g2.rngfnd_pitch)*M_PI/180) * cosf((degrees(euler.x)+g2.rngfnd_roll)*M_PI/180); // euler.y - pitch, euler.x - roll
+    temp = MAX(temp, 0.707f);
+    temp_alt = (float)temp_alt * temp;
  #endif
 
     rangefinder_state.alt_cm = temp_alt;

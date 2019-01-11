@@ -586,6 +586,10 @@ public:
 
     AP_Float tuning_min;
     AP_Float tuning_max;
+
+    AP_Int16 rngfnd_roll;
+    AP_Int16 rngfnd_pitch;
+
 };
 
 extern const AP_Param::Info        var_info[];

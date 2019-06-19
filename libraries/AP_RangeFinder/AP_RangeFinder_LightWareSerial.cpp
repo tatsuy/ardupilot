@@ -28,8 +28,10 @@ extern const AP_HAL::HAL& hal;
 AP_RangeFinder_LightWareSerial::AP_RangeFinder_LightWareSerial(RangeFinder::RangeFinder_State &_state,
                                                                AP_RangeFinder_Params &_params,
                                                                AP_SerialManager &serial_manager,
-                                                               uint8_t serial_instance) :
+                                                               uint8_t serial_instance,
+                                                               RangeFinder::RangeFinder_Type _rftype) :
     AP_RangeFinder_Backend(_state, _params)
+    , rftype(_rftype)
 {
     uart = serial_manager.find_serial(AP_SerialManager::SerialProtocol_Rangefinder, serial_instance);
     if (uart != nullptr) {
@@ -58,6 +60,39 @@ bool AP_RangeFinder_LightWareSerial::get_reading(uint16_t &reading_cm)
     float sum = 0;
     uint16_t count = 0;
     int16_t nbytes = uart->available();
+
+    if (rftype == RangeFinder::RangeFinder_TYPE_LWSER_SF30_BeforeRev7 ||
+            rftype == RangeFinder::RangeFinder_TYPE_LWSER_SF30) {
+        uint8_t byte_h;
+        bool isFirst = true;
+        while (nbytes-- > 0) {
+            uint8_t _byte = uart->read();
+            if (isFirst) {
+                if (_byte & 0x80) {
+                    byte_h = _byte;
+                    isFirst = false;
+                }
+            } else {
+                if (!(_byte & 0x80)) {
+                    uint8_t byte_l = _byte;
+                    if (rftype == RangeFinder::RangeFinder_TYPE_LWSER_SF30_BeforeRev7) {
+                        sum += ((byte_h & 0x7f) + (byte_l << 1) / 256.0) * 100;
+                    } else {
+                        sum += (byte_h & 0x7f) << 7 | (byte_l & 0x7f);
+                    }
+                    count++;
+                }
+                isFirst = true;
+            }
+        }
+
+        if (count == 0) {
+            return false;
+        }
+        reading_cm = sum / count;
+        return true;
+    }
+
     while (nbytes-- > 0) {
         char c = uart->read();
         if (c == '\r') {

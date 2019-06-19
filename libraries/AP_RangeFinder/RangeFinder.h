@@ -72,6 +72,8 @@ public:
         RangeFinder_TYPE_BLPing = 23,
         RangeFinder_TYPE_UAVCAN = 24,
         RangeFinder_TYPE_BenewakeTFminiPlus = 25,
+        RangeFinder_TYPE_LWSER_SF30_BeforeRev7 = 26,
+        RangeFinder_TYPE_LWSER_SF30 = 27,
     };
 
     enum RangeFinder_Function {

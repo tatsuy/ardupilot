@@ -11,7 +11,8 @@ public:
     AP_RangeFinder_LightWareSerial(RangeFinder::RangeFinder_State &_state,
                                    AP_RangeFinder_Params &_params,
                                    AP_SerialManager &serial_manager,
-                                   uint8_t serial_instance);
+                                   uint8_t serial_instance,
+                                   RangeFinder::RangeFinder_Type _rftype);
 
     // static detection function
     static bool detect(AP_SerialManager &serial_manager, uint8_t serial_instance);
@@ -33,4 +34,5 @@ private:
     char linebuf[10];
     uint8_t linebuf_len = 0;
     uint32_t last_init_ms;
+    RangeFinder::RangeFinder_Type rftype;
 };

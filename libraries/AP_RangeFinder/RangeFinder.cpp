@@ -440,8 +440,10 @@ void RangeFinder::detect_instance(uint8_t instance, uint8_t& serial_instance)
         break;
 #endif
     case RangeFinder_TYPE_LWSER:
+    case RangeFinder_TYPE_LWSER_SF30_BeforeRev7:
+    case RangeFinder_TYPE_LWSER_SF30:
         if (AP_RangeFinder_LightWareSerial::detect(serial_manager, serial_instance)) {
-            drivers[instance] = new AP_RangeFinder_LightWareSerial(state[instance], params[instance], serial_manager, serial_instance++);
+            drivers[instance] = new AP_RangeFinder_LightWareSerial(state[instance], params[instance], serial_manager, serial_instance++, _type);
         }
         break;
     case RangeFinder_TYPE_LEDDARONE:

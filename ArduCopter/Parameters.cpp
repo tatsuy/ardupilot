@@ -976,6 +976,11 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     AP_GROUPINFO("ZIGZAG_AUTO_PUMP", 38, ParametersG2, zigzag_auto_pump_enabled, ZIGZAG_AUTO_PUMP_ENABLED),
 #endif
 
+    // @Param: ZIGZAG_OUT
+    // @DisplayName: Zigzag out
+    // @Description: output channel for sprayer
+    // @User: Standard
+    AP_GROUPINFO("ZIGZAG_OUT", 60, ParametersG2, zigzag_out, 7),
 
     AP_GROUPEND
 };

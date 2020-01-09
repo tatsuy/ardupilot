@@ -624,6 +624,7 @@ public:
     AP_Int8 zigzag_auto_pump_enabled;
 #endif
 
+    AP_Int8 zigzag_out;
 };
 
 extern const AP_Param::Info        var_info[];

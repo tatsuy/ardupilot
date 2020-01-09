@@ -7,6 +7,7 @@
 */
 
 #define ZIGZAG_WP_RADIUS_CM 300
+AP_ServoRelayEvents *sre = AP::servorelayevents();
 
 // initialise zigzag controller
 bool ModeZigZag::init(bool ignore_checks)
@@ -119,6 +120,7 @@ void ModeZigZag::save_or_move_to_destination(uint8_t dest_num)
                         copter.sprayer.run(true);
                     }
 #endif
+                    sre->do_set_servo(g2.zigzag_out, 1934);
                     reach_wp_time_ms = 0;
                     if (dest_num == 0) {
                         gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to A");
@@ -142,6 +144,7 @@ void ModeZigZag::return_to_manual_control(bool maintain_target)
             copter.sprayer.run(false);
         }
 #endif
+        sre->do_set_servo(g2.zigzag_out, 1094);
         loiter_nav->clear_pilot_desired_acceleration();
         if (maintain_target) {
             const Vector3f& wp_dest = wp_nav->get_wp_destination();

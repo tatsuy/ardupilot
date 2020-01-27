@@ -30,7 +30,7 @@ static int lua_servo_set_output_pwm(lua_State *L) {
     check_arguments(L, 2, "set_output_pwm");
 
     const SRV_Channel::Aux_servo_function_t servo_function = (SRV_Channel::Aux_servo_function_t)luaL_checkinteger(L, -2);
-    luaL_argcheck(L, ((servo_function >= SRV_Channel::Aux_servo_function_t::k_scripting1) &&
+    luaL_argcheck(L, ((servo_function >= SRV_Channel::Aux_servo_function_t::k_rcin1) &&
                       (servo_function <= SRV_Channel::Aux_servo_function_t::k_scripting16)),
                   2, "function out of range");
 

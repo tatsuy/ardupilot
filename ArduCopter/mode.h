@@ -45,6 +45,9 @@ public:
     Mode(const Mode &other) = delete;
     Mode &operator=(const Mode&) = delete;
 
+    // returns a unique number specific to this mode
+    virtual Number mode_number() const = 0;
+
     // child classes should override these methods
     virtual bool init(bool ignore_checks) {
         return true;
@@ -258,6 +261,7 @@ class ModeAcro : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::ACRO; }
 
     enum class Trainer {
         OFF = 0,
@@ -308,6 +312,7 @@ class ModeAltHold : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::ALT_HOLD; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -335,6 +340,7 @@ class ModeAuto : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::AUTO; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -531,6 +537,7 @@ class ModeAutoTune : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::AUTOTUNE; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -557,6 +564,7 @@ class ModeBrake : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::BRAKE; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -588,6 +596,7 @@ class ModeCircle : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::CIRCLE; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -618,6 +627,7 @@ class ModeDrift : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::DRIFT; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -644,6 +654,7 @@ class ModeFlip : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::FLIP; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -689,6 +700,7 @@ class ModeFlowHold : public Mode {
 public:
     // need a constructor for parameters
     ModeFlowHold(void);
+    Number mode_number() const override { return Number::FLOWHOLD; }
 
     bool init(bool ignore_checks) override;
     void run(void) override;
@@ -771,6 +783,7 @@ class ModeGuided : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::GUIDED; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -837,6 +850,7 @@ class ModeGuidedNoGPS : public ModeGuided {
 public:
     // inherit constructor
     using ModeGuided::Mode;
+    Number mode_number() const override { return Number::GUIDED_NOGPS; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -861,6 +875,7 @@ class ModeLand : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::LAND; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -892,6 +907,7 @@ class ModeLoiter : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::LOITER; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -933,6 +949,7 @@ class ModePosHold : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::POSHOLD; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -1012,6 +1029,7 @@ class ModeRTL : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::RTL; }
 
     bool init(bool ignore_checks) override;
     void run() override {
@@ -1113,6 +1131,7 @@ class ModeSmartRTL : public ModeRTL {
 public:
     // inherit constructor
     using ModeRTL::Mode;
+    Number mode_number() const override { return Number::SMART_RTL; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -1152,6 +1171,7 @@ class ModeSport : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::SPORT; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -1179,6 +1199,7 @@ class ModeStabilize : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::STABILIZE; }
 
     virtual void run() override;
 
@@ -1217,6 +1238,7 @@ class ModeSystemId : public Mode {
 
 public:
     ModeSystemId(void);
+    Number mode_number() const override { return Number::SYSTEMID; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -1284,6 +1306,7 @@ class ModeThrow : public Mode {
 public:
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::THROW; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -1335,6 +1358,7 @@ class ModeAvoidADSB : public ModeGuided {
 public:
     // inherit constructor
     using ModeGuided::Mode;
+    Number mode_number() const override { return Number::AVOID_ADSB; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -1361,6 +1385,7 @@ public:
 
     // inherit constructor
     using ModeGuided::Mode;
+    Number mode_number() const override { return Number::FOLLOW; }
 
     bool init(bool ignore_checks) override;
     void exit();
@@ -1390,6 +1415,7 @@ public:
 
     // Inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::ZIGZAG; }
 
     bool init(bool ignore_checks) override;
     void run() override;
@@ -1436,6 +1462,7 @@ public:
 
     // inherit constructor
     using Mode::Mode;
+    Number mode_number() const override { return Number::AUTOROTATE; }
 
     bool init(bool ignore_checks) override;
     void run() override;

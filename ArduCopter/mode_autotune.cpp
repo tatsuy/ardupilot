@@ -9,7 +9,7 @@
 bool AutoTune::init()
 {
     // use position hold while tuning if we were in QLOITER
-    bool position_hold = (copter.control_mode == Mode::Number::LOITER || copter.control_mode == Mode::Number::POSHOLD);
+    bool position_hold = (copter.control_mode == &copter.mode_loiter || copter.control_mode == &copter.mode_poshold);
 
     return init_internals(position_hold,
                           copter.attitude_control,
@@ -24,10 +24,10 @@ bool AutoTune::init()
 bool AutoTune::start()
 {
     // only allow flip from Stabilize, AltHold,  PosHold or Loiter modes
-    if (copter.control_mode != Mode::Number::STABILIZE &&
-        copter.control_mode != Mode::Number::ALT_HOLD &&
-        copter.control_mode != Mode::Number::LOITER &&
-        copter.control_mode != Mode::Number::POSHOLD) {
+    if (copter.control_mode != &copter.mode_stabilize &&
+        copter.control_mode != &copter.mode_althold &&
+        copter.control_mode != &copter.mode_loiter &&
+        copter.control_mode != &copter.mode_poshold) {
         return false;
     }
 

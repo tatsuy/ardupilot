@@ -216,7 +216,7 @@ void ToyMode::update()
             
     // set ALT_HOLD as indoors for the EKF (disables GPS vertical velocity fusion)
 #if 0
-    copter.ahrs.set_indoor_mode(copter.control_mode == ALT_HOLD || copter.control_mode == FLOWHOLD);
+    copter.ahrs.set_indoor_mode(copter.control_mode == &copter.mode_althold || copter.control_mode == &copter.mode_flowhold);
 #endif
     
     bool left_button = false;
@@ -424,7 +424,7 @@ void ToyMode::update()
         if (throttle_high_counter >= TOY_LAND_ARM_COUNT) {
             gcs().send_text(MAV_SEVERITY_INFO, "Tmode: throttle arm");
             arm_check_compass();
-            if (!copter.arming.arm(AP_Arming::Method::MAVLINK) && (flags & FLAG_UPGRADE_LOITER) && copter.control_mode == Mode::Number::LOITER) {
+            if (!copter.arming.arm(AP_Arming::Method::MAVLINK) && (flags & FLAG_UPGRADE_LOITER) && copter.control_mode == &copter.mode_loiter) {
                 /*
                   support auto-switching to ALT_HOLD, then upgrade to LOITER once GPS available
                  */
@@ -453,7 +453,7 @@ void ToyMode::update()
     }
 
     if (upgrade_to_loiter) {
-        if (!copter.motors->armed() || copter.control_mode != Mode::Number::ALT_HOLD) {
+        if (!copter.motors->armed() || copter.control_mode != &copter.mode_althold) {
             upgrade_to_loiter = false;
 #if 0
             AP_Notify::flags.hybrid_loiter = false;
@@ -466,12 +466,12 @@ void ToyMode::update()
         }
     }
 
-    if (copter.control_mode == Mode::Number::RTL && (flags & FLAG_RTL_CANCEL) && throttle_near_max) {
+    if (copter.control_mode == &copter.mode_rtl && (flags & FLAG_RTL_CANCEL) && throttle_near_max) {
         gcs().send_text(MAV_SEVERITY_INFO, "Tmode: RTL cancel");        
         set_and_remember_mode(Mode::Number::LOITER, ModeReason::TOY_MODE);
     }
     
-    enum Mode::Number old_mode = copter.control_mode;
+    enum Mode::Number old_mode = copter.control_mode->mode_number();
     enum Mode::Number new_mode = old_mode;
 
     /*
@@ -636,12 +636,12 @@ void ToyMode::update()
         break;
     }
 
-    if (!copter.motors->armed() && (copter.control_mode == Mode::Number::LAND || copter.control_mode == Mode::Number::RTL)) {
+    if (!copter.motors->armed() && (copter.control_mode == &copter.mode_land || copter.control_mode == &copter.mode_rtl)) {
         // revert back to last primary flight mode if disarmed after landing
         new_mode = Mode::Number(primary_mode[last_mode_choice].get());
     }
     
-    if (new_mode != copter.control_mode) {
+    if (new_mode != copter.control_mode->mode_number()) {
         load_test.running = false;
 #if AC_FENCE == ENABLED
         copter.fence.enable(false);
@@ -676,7 +676,7 @@ void ToyMode::update()
  */
 bool ToyMode::set_and_remember_mode(Mode::Number mode, ModeReason reason)
 {
-    if (copter.control_mode == mode) {
+    if (copter.control_mode->mode_number() == mode) {
         return true;
     }
     if (!copter.set_mode(mode, reason)) {

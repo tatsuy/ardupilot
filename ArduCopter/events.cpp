@@ -54,7 +54,7 @@ void Copter::failsafe_radio_on_event()
         gcs().send_text(MAV_SEVERITY_WARNING, "Radio Failsafe - Continuing Landing");
         desired_action = Failsafe_Action_Land;
 
-    } else if (control_mode == Mode::Number::AUTO && failsafe_option(FailsafeOption::RC_CONTINUE_IF_AUTO)) {
+    } else if (control_mode == &copter.mode_auto && failsafe_option(FailsafeOption::RC_CONTINUE_IF_AUTO)) {
         // Allow mission to continue when FS_OPTIONS is set to continue mission
         gcs().send_text(MAV_SEVERITY_WARNING, "Radio Failsafe - Continuing Auto Mode");       
         desired_action = Failsafe_Action_None;
@@ -189,7 +189,7 @@ void Copter::failsafe_gcs_on_event(void)
         gcs().send_text(MAV_SEVERITY_WARNING, "GCS Failsafe - Continuing Landing");
         desired_action = Failsafe_Action_Land;
 
-    } else if (control_mode == Mode::Number::AUTO && failsafe_option(FailsafeOption::GCS_CONTINUE_IF_AUTO)) {
+    } else if (control_mode == &copter.mode_auto && failsafe_option(FailsafeOption::GCS_CONTINUE_IF_AUTO)) {
         // Allow mission to continue when FS_OPTIONS is set to continue mission
         gcs().send_text(MAV_SEVERITY_WARNING, "GCS Failsafe - Continuing Auto Mode");
         desired_action = Failsafe_Action_None;
@@ -261,7 +261,7 @@ void Copter::failsafe_terrain_on_event()
     if (should_disarm_on_failsafe()) {
         arming.disarm();
 #if MODE_RTL_ENABLED == ENABLED
-    } else if (control_mode == Mode::Number::RTL) {
+    } else if (control_mode == &copter.mode_rtl) {
         mode_rtl.restart_without_terrain();
 #endif
     } else {
@@ -335,7 +335,7 @@ bool Copter::should_disarm_on_failsafe() {
         return true;
     }
 
-    switch (control_mode) {
+    switch (control_mode->mode_number()) {
         case Mode::Number::STABILIZE:
         case Mode::Number::ACRO:
             // if throttle is zero OR vehicle is landed disarm motors

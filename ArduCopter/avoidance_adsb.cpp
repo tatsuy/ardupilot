@@ -20,15 +20,15 @@ MAV_COLLISION_ACTION AP_Avoidance_Copter::handle_avoidance(const AP_Avoidance::O
         copter.failsafe.adsb = true;
         failsafe_state_change = true;
         // record flight mode in case it's required for the recovery
-        prev_control_mode = copter.control_mode;
+        prev_control_mode = copter.control_mode->mode_number();
     }
 
     // take no action in some flight modes
-    if (copter.control_mode == Mode::Number::LAND ||
+    if (copter.control_mode == &copter.mode_land ||
 #if MODE_THROW_ENABLED == ENABLED
-        copter.control_mode == Mode::Number::THROW ||
+        copter.control_mode == &copter.mode_throw ||
 #endif
-        copter.control_mode == Mode::Number::FLIP) {
+        copter.control_mode == &copter.mode_flip) {
         actual_action = MAV_COLLISION_ACTION_NONE;
     }
 
@@ -148,7 +148,7 @@ void AP_Avoidance_Copter::set_mode_else_try_RTL_else_LAND(Mode::Number mode)
 bool AP_Avoidance_Copter::check_flightmode(bool allow_mode_change)
 {
     // ensure copter is in avoid_adsb mode
-    if (allow_mode_change && copter.control_mode != Mode::Number::AVOID_ADSB) {
+    if (allow_mode_change && copter.control_mode != &copter.mode_avoid_adsb) {
         if (!copter.set_mode(Mode::Number::AVOID_ADSB, ModeReason::AVOIDANCE)) {
             // failed to set mode so exit immediately
             return false;
@@ -156,7 +156,7 @@ bool AP_Avoidance_Copter::check_flightmode(bool allow_mode_change)
     }
 
     // check flight mode
-    return (copter.control_mode == Mode::Number::AVOID_ADSB);
+    return (copter.control_mode == &copter.mode_avoid_adsb);
 }
 
 bool AP_Avoidance_Copter::handle_avoidance_vertical(const AP_Avoidance::Obstacle *obstacle, bool allow_mode_change)

@@ -92,7 +92,7 @@ void Copter::update_heli_control_dynamics(void)
 bool Copter::should_use_landing_swash() const
 {
     if (flightmode->has_manual_throttle() ||
-        control_mode == Mode::Number::DRIFT) {
+        control_mode == &copter.mode_drift) {
         // manual modes always uses full swash range
         return false;
     }

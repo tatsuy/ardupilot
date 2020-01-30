@@ -30,14 +30,14 @@ void Copter::crash_check()
     }
 
     // return immediately if we are not in an angle stabilize flight mode or we are flipping
-    if (control_mode == Mode::Number::ACRO || control_mode == Mode::Number::FLIP) {
+    if (control_mode == &copter.mode_acro || control_mode == &copter.mode_flip) {
         crash_counter = 0;
         return;
     }
 
 #if MODE_AUTOROTATE_ENABLED == ENABLED
     //return immediately if in autorotation mode
-    if (control_mode == Mode::Number::AUTOROTATE) {
+    if (control_mode == &copter.mode_autorotate) {
         crash_counter = 0;
         return;
     }
@@ -176,7 +176,7 @@ void Copter::parachute_check()
     }
 
     // return immediately if we are not in an angle stabilize flight mode or we are flipping
-    if (control_mode == Mode::Number::ACRO || control_mode == Mode::Number::FLIP) {
+    if (control_mode == &copter.mode_acro || control_mode == &copter.mode_flip) {
         control_loss_count = 0;
         return;
     }

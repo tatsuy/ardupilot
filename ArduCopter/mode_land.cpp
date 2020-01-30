@@ -157,5 +157,5 @@ void Copter::set_mode_land_with_pause(ModeReason reason)
 // landing_with_GPS - returns true if vehicle is landing using GPS
 bool Copter::landing_with_GPS()
 {
-    return (control_mode == Mode::Number::LAND && land_with_gps);
+    return (control_mode == &copter.mode_land && land_with_gps);
 }

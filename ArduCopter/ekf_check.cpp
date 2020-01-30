@@ -148,7 +148,7 @@ void Copter::failsafe_ekf_event()
     AP::logger().Write_Error(LogErrorSubsystem::FAILSAFE_EKFINAV, LogErrorCode::FAILSAFE_OCCURRED);
 
     // sometimes LAND *does* require GPS so ensure we are in non-GPS land
-    if (control_mode == Mode::Number::LAND && landing_with_GPS()) {
+    if (control_mode == &copter.mode_land && landing_with_GPS()) {
         mode_land.do_not_use_GPS();
         return;
     }

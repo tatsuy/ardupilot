@@ -387,6 +387,7 @@ private:
     ModeReason control_mode_reason = ModeReason::UNKNOWN;
     Mode::Number prev_control_mode;
 
+    AP_ServoRelayEvents *sre = AP::servorelayevents();
     RCMapper rcmap;
 
     // intertial nav alt when we armed

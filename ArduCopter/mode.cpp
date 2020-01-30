@@ -266,6 +266,11 @@ bool Copter::set_mode(Mode::Number mode, ModeReason reason)
     // perform any cleanup required by previous flight mode
     exit_mode(flightmode, new_flightmode);
 
+    if ((control_mode == Mode::Number::AUTO && mode != Mode::Number::AUTO) ||
+            (control_mode == Mode::Number::ZIGZAG && mode != Mode::Number::ZIGZAG)) {
+        sre->do_set_servo(g2.zigzag_out, 1094);
+    }
+
     // store previous flight mode (only used by tradeheli's autorotation)
     prev_control_mode = control_mode;
 

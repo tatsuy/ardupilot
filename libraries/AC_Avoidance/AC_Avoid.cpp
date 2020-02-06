@@ -18,6 +18,7 @@
 #include <AC_Fence/AC_Fence.h>         // Failsafe fence library
 #include <AP_Proximity/AP_Proximity.h>
 #include <AP_Beacon/AP_Beacon.h>
+#include <AP_ServoRelayEvents/AP_ServoRelayEvents.h>
 
 #include <stdio.h>
 
@@ -788,6 +789,10 @@ void AC_Avoid::adjust_velocity_polygon(float kP, float accel_cmss, Vector2f &des
                 Vector2f limit_direction = intersection - position_xy;
                 const float limit_distance_cm = limit_direction.length();
                 if (!is_zero(limit_distance_cm)) {
+                    if (limit_distance_cm <= margin_cm * 1.5) {
+                        AP_ServoRelayEvents *sre = AP::servorelayevents();
+                        sre->do_set_servo(7, 1094);
+                    }
                     if (limit_distance_cm <= margin_cm) {
                         // we are within the margin so stop vehicle
                         safe_vel.zero();

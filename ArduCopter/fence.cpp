@@ -20,6 +20,10 @@ void Copter::fence_check()
         return;
     }
 
+    if (new_breaches && copter.flightmode == &mode_loiter) {
+        sre->do_set_servo(g2.zigzag_out, 1094);
+    }
+
     // if there is a new breach take action
     if (new_breaches) {
 

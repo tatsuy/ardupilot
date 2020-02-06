@@ -267,7 +267,8 @@ bool Copter::set_mode(Mode::Number mode, ModeReason reason)
     exit_mode(flightmode, new_flightmode);
 
     if ((control_mode == Mode::Number::AUTO && mode != Mode::Number::AUTO) ||
-            (control_mode == Mode::Number::ZIGZAG && mode != Mode::Number::ZIGZAG)) {
+            (control_mode == Mode::Number::ZIGZAG && mode != Mode::Number::ZIGZAG) ||
+            mode == Mode::Number::RTL) {
         sre->do_set_servo(g2.zigzag_out, 1094);
     }
 

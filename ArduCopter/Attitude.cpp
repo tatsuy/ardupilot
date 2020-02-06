@@ -47,7 +47,7 @@ void Copter::update_throttle_hover()
     }
 
     // do not update in manual throttle modes or Drift
-    if (flightmode->has_manual_throttle() || (copter.control_mode == &copter.mode_drift)) {
+    if (flightmode->has_manual_throttle() || (copter.flightmode == &copter.mode_drift)) {
         return;
     }
 

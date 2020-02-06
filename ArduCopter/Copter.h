@@ -384,9 +384,9 @@ private:
 
     // This is the state of the flight control system
     // There are multiple states defined such as STABILIZE, ACRO,
-    Mode *control_mode;
-    ModeReason control_mode_reason = ModeReason::UNKNOWN;
-    Mode::Number prev_control_mode;
+    Mode *flightmode;
+    ModeReason flightmode_reason = ModeReason::UNKNOWN;
+    Mode::Number prev_flightmode;
 
     RCMapper rcmap;
 
@@ -790,7 +790,7 @@ private:
     // mode.cpp
     bool set_mode(Mode::Number mode, ModeReason reason);
     bool set_mode(const uint8_t new_mode, const ModeReason reason) override;
-    uint8_t get_mode() const override { return (uint8_t)control_mode->mode_number(); }
+    uint8_t get_mode() const override { return (uint8_t)flightmode->mode_number(); }
     void update_flight_mode();
     void notify_flight_mode();
 
@@ -894,7 +894,6 @@ private:
     void publish_osd_info();
 #endif
 
-    Mode *flightmode;
 #if MODE_ACRO_ENABLED == ENABLED
 #if FRAME_CONFIG == HELI_FRAME
     ModeAcro_Heli mode_acro;

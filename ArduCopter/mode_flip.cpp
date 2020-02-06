@@ -36,15 +36,15 @@
 bool ModeFlip::init(bool ignore_checks)
 {
     // only allow flip from ACRO, Stabilize, AltHold or Drift flight modes
-    if (copter.control_mode != &copter.mode_acro &&
-        copter.control_mode != &copter.mode_stabilize &&
-        copter.control_mode != &copter.mode_althold &&
-        copter.control_mode != &copter.mode_flowhold) {
+    if (copter.flightmode != &copter.mode_acro &&
+        copter.flightmode != &copter.mode_stabilize &&
+        copter.flightmode != &copter.mode_althold &&
+        copter.flightmode != &copter.mode_flowhold) {
         return false;
     }
 
     // if in acro or stabilize ensure throttle is above zero
-    if (copter.ap.throttle_zero && (copter.control_mode == &copter.mode_acro || copter.control_mode == &copter.mode_stabilize)) {
+    if (copter.ap.throttle_zero && (copter.flightmode == &copter.mode_acro || copter.flightmode == &copter.mode_stabilize)) {
         return false;
     }
 
@@ -59,7 +59,7 @@ bool ModeFlip::init(bool ignore_checks)
     }
 
     // capture original flight mode so that we can return to it after completion
-    orig_control_mode = copter.control_mode->mode_number();
+    orig_flightmode = copter.flightmode->mode_number();
 
     // initialise state
     _state = FlipState::Start;
@@ -192,7 +192,7 @@ void ModeFlip::run()
         // check for successful recovery
         if (fabsf(recovery_angle) <= FLIP_RECOVERY_ANGLE) {
             // restore original flight mode
-            if (!copter.set_mode(orig_control_mode, ModeReason::FLIP_COMPLETE)) {
+            if (!copter.set_mode(orig_flightmode, ModeReason::FLIP_COMPLETE)) {
                 // this should never happen but just in case
                 copter.set_mode(Mode::Number::STABILIZE, ModeReason::UNKNOWN);
             }
@@ -204,7 +204,7 @@ void ModeFlip::run()
     }
     case FlipState::Abandon:
         // restore original flight mode
-        if (!copter.set_mode(orig_control_mode, ModeReason::FLIP_COMPLETE)) {
+        if (!copter.set_mode(orig_flightmode, ModeReason::FLIP_COMPLETE)) {
             // this should never happen but just in case
             copter.set_mode(Mode::Number::STABILIZE, ModeReason::UNKNOWN);
         }

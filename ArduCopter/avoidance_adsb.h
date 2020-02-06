@@ -39,5 +39,5 @@ protected:
     bool handle_avoidance_perpendicular(const AP_Avoidance::Obstacle *obstacle, bool allow_mode_change);
 
     // control mode before avoidance began
-    Mode::Number prev_control_mode = Mode::Number::RTL;
+    Mode::Number prev_flightmode = Mode::Number::RTL;
 };

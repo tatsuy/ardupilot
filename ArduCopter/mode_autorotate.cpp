@@ -79,7 +79,7 @@ void ModeAutorotate::run()
         phase_switch = Autorotation_Phase::BAIL_OUT;
     } else if (motors->get_interlock() && copter.ap.land_complete) {
         // Aircraft is landed and no need to bail out
-        set_mode(copter.prev_control_mode, ModeReason::AUTOROTATION_BAILOUT);
+        set_mode(copter.prev_flightmode, ModeReason::AUTOROTATION_BAILOUT);
     }
 
     // Current time
@@ -262,10 +262,10 @@ void ModeAutorotate::run()
         if ((now - _bail_time_start)/1000.0f >= _bail_time) {
             // Bail out timer complete.  Change flight mode. Do not revert back to auto. Prevent aircraft
             // from continuing mission and potentially flying further away after a power failure.
-            if (copter.prev_control_mode == Mode::Number::AUTO) {
+            if (copter.prev_flightmode == Mode::Number::AUTO) {
                 set_mode(Mode::Number::ALT_HOLD, ModeReason::AUTOROTATION_BAILOUT);
             } else {
-                set_mode(copter.prev_control_mode, ModeReason::AUTOROTATION_BAILOUT);
+                set_mode(copter.prev_flightmode, ModeReason::AUTOROTATION_BAILOUT);
             }
         }
 

@@ -32,6 +32,7 @@ extern const AP_HAL::HAL& hal;
 bool AP_RangeFinder_LeddarVu8::get_reading(uint16_t &reading_cm)
 {
     if (uart == nullptr) {
+        gcs().send_text(MAV_SEVERITY_INFO, "fails get_reading");
         return false;
     }
 
@@ -50,6 +51,7 @@ bool AP_RangeFinder_LeddarVu8::get_reading(uint16_t &reading_cm)
 
     // read any available characters from the lidar
     int16_t nbytes = uart->available();
+    gcs().send_text(MAV_SEVERITY_INFO, "nbytes: %d", nbytes);
     while (nbytes-- > 0) {
         int16_t r = uart->read();
         if (r < 0) {
@@ -79,9 +81,11 @@ bool AP_RangeFinder_LeddarVu8::get_reading(uint16_t &reading_cm)
             // driver defined maximum range for the model and user defined max range + 1m
             reading_cm = MAX(LEDDARVU8_DIST_MAX_CM, max_distance_cm() + LEDDARVU8_OUT_OF_RANGE_ADD_CM);
         }
+        gcs().send_text(MAV_SEVERITY_INFO, "reading: %d", reading_cm);
         return true;
     }
 
+    gcs().send_text(MAV_SEVERITY_INFO, "no reading");
     // no readings so return false
     return false;
 }
@@ -90,8 +94,10 @@ bool AP_RangeFinder_LeddarVu8::get_reading(uint16_t &reading_cm)
 uint8_t AP_RangeFinder_LeddarVu8::get_sensor_address() const
 {
     if (params.address == 0) {
+        gcs().send_text(MAV_SEVERITY_INFO, "get_sensor_address() - default");
         return LEDDARVU8_ADDR_DEFAULT;
     }
+    gcs().send_text(MAV_SEVERITY_INFO, "get_sensor_address()");
     return params.address;
 }
 
@@ -120,6 +126,7 @@ void AP_RangeFinder_LeddarVu8::request_distances()
 
     // record time of request
     last_distance_request_ms = AP_HAL::millis();
+    gcs().send_text(MAV_SEVERITY_INFO, "request_distance()");
 }
 
 // process one byte received on serial port
@@ -131,6 +138,7 @@ bool AP_RangeFinder_LeddarVu8::parse_byte(uint8_t b, bool &valid_reading, uint16
     switch (parsed_msg.state) {
 
     case ParseState::WAITING_FOR_ADDRESS: {
+        gcs().send_text(MAV_SEVERITY_INFO, "WAITING_FOR_ADDRESS: %d", b);
         if (b == get_sensor_address()) {
             parsed_msg.address = b;
             parsed_msg.state = ParseState::WAITING_FOR_FUNCTION_CODE;
@@ -139,6 +147,7 @@ bool AP_RangeFinder_LeddarVu8::parse_byte(uint8_t b, bool &valid_reading, uint16
     }
 
     case ParseState::WAITING_FOR_FUNCTION_CODE:
+        gcs().send_text(MAV_SEVERITY_INFO, "WAITING_FOR_FUNCTION_CODE: %d", b);
         if (b == (uint8_t)FunctionCode::READ_INPUT_REGISTER) {
             parsed_msg.function_code = b;
             parsed_msg.state = ParseState::WAITING_FOR_PAYLOAD_LEN;
@@ -148,6 +157,7 @@ bool AP_RangeFinder_LeddarVu8::parse_byte(uint8_t b, bool &valid_reading, uint16
         break;
 
     case ParseState::WAITING_FOR_PAYLOAD_LEN:
+        gcs().send_text(MAV_SEVERITY_INFO, "WAITING_FOR_PAYLOAD_LEN: %d", b);
         // only parse messages of the expected length
         if (b == LEDDARVU8_PAYLOAD_LENGTH) {
             parsed_msg.payload_len = b;
@@ -159,6 +169,7 @@ bool AP_RangeFinder_LeddarVu8::parse_byte(uint8_t b, bool &valid_reading, uint16
         break;
 
     case ParseState::WAITING_FOR_PAYLOAD:
+        gcs().send_text(MAV_SEVERITY_INFO, "WAITING_FOR_PAYLOAD: %d", b);
         if (parsed_msg.payload_recv < parsed_msg.payload_len) {
             if (parsed_msg.payload_recv < ARRAY_SIZE(parsed_msg.payload)) {
                 parsed_msg.payload[parsed_msg.payload_recv] = b;
@@ -171,11 +182,13 @@ bool AP_RangeFinder_LeddarVu8::parse_byte(uint8_t b, bool &valid_reading, uint16
         break;
 
     case ParseState::WAITING_FOR_CRC_LOW:
+        gcs().send_text(MAV_SEVERITY_INFO, "WAITING_FOR_CRC_LOW: %d", b);
         parsed_msg.crc = b;
         parsed_msg.state = ParseState::WAITING_FOR_CRC_HIGH;
         break;
 
     case ParseState::WAITING_FOR_CRC_HIGH: {
+        gcs().send_text(MAV_SEVERITY_INFO, "WAITING_FOR_CRC_HIGH: %d", b);
         parsed_msg.crc |= ((uint16_t)b << 8);
         parsed_msg.state = ParseState::WAITING_FOR_ADDRESS;
 
@@ -193,12 +206,12 @@ bool AP_RangeFinder_LeddarVu8::parse_byte(uint8_t b, bool &valid_reading, uint16
                     valid_reading = true;
                 }
             }
+            gcs().send_text(MAV_SEVERITY_INFO, "valid: %d", reading_cm);
             return true;
         }
         break;
     }
     }
-
     valid_reading = false;
     return false;
 }

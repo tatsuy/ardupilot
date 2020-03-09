@@ -53,7 +53,11 @@ bool ModeGuided::do_user_takeoff_start(float takeoff_alt_cm)
 
     // initialise wpnav destination
     Location target_loc = copter.current_loc;
-    target_loc.set_alt_cm(takeoff_alt_cm, Location::AltFrame::ABOVE_HOME);
+    Location::AltFrame frame = Location::AltFrame::ABOVE_HOME;
+    if (wp_nav->rangefinder_used_and_healthy() && wp_nav->get_terrain_source() == AC_WPNav::TerrainSource::TERRAIN_FROM_RANGEFINDER) {
+        frame = Location::AltFrame::ABOVE_TERRAIN;
+    }
+    target_loc.set_alt_cm(takeoff_alt_cm, frame);
 
     if (!wp_nav->set_wp_destination(target_loc)) {
         // failure to set destination can only be because of missing terrain data
@@ -374,8 +378,13 @@ void ModeGuided::takeoff_run()
         copter.landinggear.retract_after_takeoff();
 
         // switch to position control mode but maintain current target
-        const Vector3f& target = wp_nav->get_wp_destination();
-        set_destination(target);
+        Location dest_loc(wp_nav->get_wp_destination());
+        Location::AltFrame frame = Location::AltFrame::ABOVE_HOME;
+        if (wp_nav->rangefinder_used_and_healthy() && wp_nav->get_terrain_source() == AC_WPNav::TerrainSource::TERRAIN_FROM_RANGEFINDER) {
+            frame = Location::AltFrame::ABOVE_TERRAIN;
+        }
+        dest_loc.set_alt_cm(dest_loc.alt, frame);
+        set_destination(dest_loc);
     }
 }
 

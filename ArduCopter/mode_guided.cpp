@@ -53,7 +53,7 @@ bool ModeGuided::do_user_takeoff_start(float final_alt_above_home)
 
     // initialise wpnav destination
     Location target_loc = copter.current_loc;
-    target_loc.set_alt_cm(final_alt_above_home, Location::AltFrame::ABOVE_HOME);
+    target_loc.set_alt_cm(final_alt_above_home, Location::AltFrame::ABOVE_TERRAIN);
 
     if (!wp_nav->set_wp_destination(target_loc)) {
         // failure to set destination can only be because of missing terrain data
@@ -369,14 +369,6 @@ void ModeGuided::run()
 void ModeGuided::takeoff_run()
 {
     auto_takeoff_run();
-    if (wp_nav->reached_wp_destination()) {
-        // optionally retract landing gear
-        copter.landinggear.retract_after_takeoff();
-
-        // switch to position control mode but maintain current target
-        const Vector3f& target = wp_nav->get_wp_destination();
-        set_destination(target);
-    }
 }
 
 // guided_pos_control_run - runs the guided position controller

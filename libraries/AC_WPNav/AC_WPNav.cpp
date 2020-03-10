@@ -221,6 +221,7 @@ bool AC_WPNav::set_wp_destination(const Vector3f& destination, bool terrain_alt)
     if (terrain_alt) {
         float origin_terr_offset;
         if (!get_terrain_offset(origin_terr_offset)) {
+            gcs().send_text(MAV_SEVERITY_INFO, "set_wp_destination - get_terrain_offset");
             return false;
         }
         origin.z -= origin_terr_offset;
@@ -268,6 +269,7 @@ bool AC_WPNav::set_wp_origin_and_destination(const Vector3f& origin, const Vecto
     float origin_terr_offset = 0.0f;
     if (terrain_alt) {
         if (!get_terrain_offset(origin_terr_offset)) {
+            gcs().send_text(MAV_SEVERITY_INFO, "set_wp_origin_and_destination - get_terrain_offset");
             return false;
         }
     }

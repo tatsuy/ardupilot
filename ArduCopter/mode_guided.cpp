@@ -60,6 +60,7 @@ bool ModeGuided::do_user_takeoff_start(float takeoff_alt_cm)
     target_loc.set_alt_cm(takeoff_alt_cm, frame);
 
     if (!wp_nav->set_wp_destination(target_loc)) {
+        gcs().send_text(MAV_SEVERITY_INFO, "failure to set destination");
         // failure to set destination can only be because of missing terrain data
         AP::logger().Write_Error(LogErrorSubsystem::NAVIGATION, LogErrorCode::FAILED_TO_SET_DESTINATION);
         // failure is propagated to GCS with NAK
@@ -92,7 +93,7 @@ void ModeGuided::pos_control_start()
     wp_nav->get_wp_stopping_point(stopping_point);
 
     // no need to check return status because terrain data is not used
-    wp_nav->set_wp_destination(stopping_point, wp_nav->rangefinder_used_and_healthy() && wp_nav->get_terrain_source() == AC_WPNav::TerrainSource::TERRAIN_FROM_RANGEFINDER);
+    wp_nav->set_wp_destination(stopping_point, false);
 
     // initialise yaw
     auto_yaw.set_mode_to_default(false);

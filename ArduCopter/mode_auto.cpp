@@ -836,7 +836,7 @@ void ModeAuto::circle_run()
     // call z-axis position controller
     pos_control->update_z_controller();
 
-    if (auto_yaw.mode() == AUTO_YAW_HOLD) {
+    if (auto_yaw.mode() == AUTO_YAW_HOLD || copter.circle_nav->get_radius() < 1.0f) {
         // roll & pitch from waypoint controller, yaw rate from pilot
         attitude_control->input_euler_angle_roll_pitch_yaw(copter.circle_nav->get_roll(), copter.circle_nav->get_pitch(), copter.circle_nav->get_yaw(), true);
     } else {

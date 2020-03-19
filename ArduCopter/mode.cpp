@@ -266,12 +266,6 @@ bool Copter::set_mode(Mode::Number mode, ModeReason reason)
     // perform any cleanup required by previous flight mode
     exit_mode(flightmode, new_flightmode);
 
-    if ((control_mode == Mode::Number::AUTO && mode != Mode::Number::AUTO) ||
-            (control_mode == Mode::Number::ZIGZAG && mode != Mode::Number::ZIGZAG) ||
-            mode == Mode::Number::RTL) {
-        sre->do_set_servo(g2.zigzag_out, 1094);
-    }
-
     // store previous flight mode (only used by tradeheli's autorotation)
     prev_control_mode = control_mode;
 
@@ -300,6 +294,8 @@ bool Copter::set_mode(Mode::Number mode, ModeReason reason)
     // update notify object
     notify_flight_mode();
 
+    copter.avoid.set_param((uint32_t)g2.zigzag_delay, g2.zigzag1_out, g2.zigzag2_out);
+
     // return success
     return true;
 }
@@ -321,6 +317,13 @@ bool Copter::set_mode(const uint8_t new_mode, const ModeReason reason)
 void Copter::update_flight_mode()
 {
     surface_tracking.invalidate_for_logging();  // invalidate surface tracking alt, flight mode will set to true if used
+
+    uint32_t tnow = AP_HAL::micros();
+    if (zigzag_rtl && tnow - spray_delay_ms > (uint32_t)g2.zigzag_delay) {
+        sre->do_set_servo(g2.zigzag2_out, SRV_Channels::srv_channel(g2.zigzag2_out-1)->get_output_min());
+        spray_delay_ms = 0;
+        zigzag_rtl = false;
+    }
 
     flightmode->run();
 }
@@ -387,6 +390,14 @@ void Copter::exit_mode(Mode *&old_flightmode,
         }
     }
 #endif //HELI_FRAME
+
+    if (!zigzag_rtl && ((old_flightmode == &mode_auto && new_flightmode != &mode_auto) ||
+            (old_flightmode == &mode_zigzag && new_flightmode != &mode_zigzag) ||
+            new_flightmode == &mode_rtl)) {
+        sre->do_set_servo(g2.zigzag1_out, SRV_Channels::srv_channel(g2.zigzag1_out-1)->get_output_min());
+        spray_delay_ms = AP_HAL::micros();
+        zigzag_rtl = true;
+    }
 }
 
 // notify_flight_mode - sets notify object based on current flight mode.  Only used for OreoLED notify device

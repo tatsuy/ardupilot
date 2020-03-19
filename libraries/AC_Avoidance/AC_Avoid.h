@@ -88,6 +88,11 @@ public:
     bool limits_active() const {return (AP_HAL::millis() - _last_limit_time) < AC_AVOID_ACTIVE_LIMIT_TIMEOUT_MS;};
 
     static const struct AP_Param::GroupInfo var_info[];
+    void set_param(uint32_t delay, uint8_t shutter, uint8_t impeller) {
+        _param_delay = delay;
+        _param_shutter = shutter;
+        _param_impeller = impeller;
+    };
 
 private:
     // behaviour types (see BEHAVE parameter)
@@ -151,6 +156,13 @@ private:
     AP_Float _dist_max;         // distance (in meters) from object at which obstacle avoidance will begin in non-GPS modes
     AP_Float _margin;           // vehicle will attempt to stay this distance (in meters) from objects while in GPS modes
     AP_Int8 _behavior;          // avoidance behaviour (slide or stop)
+    uint32_t tchanged;
+    bool zigzag_avoid;
+    AP_Int32 zigzag_delay;
+    uint32_t _param_delay;
+    uint8_t _param_shutter;
+    uint8_t _param_impeller;
+    AP_ServoRelayEvents *sre = AP::servorelayevents();
 
     bool _proximity_enabled = true; // true if proximity sensor based avoidance is enabled (used to allow pilot to enable/disable)
     uint32_t _last_limit_time;      // the last time a limit was active

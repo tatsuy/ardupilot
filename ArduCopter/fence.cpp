@@ -20,8 +20,17 @@ void Copter::fence_check()
         return;
     }
 
-    if (new_breaches && copter.flightmode == &mode_loiter) {
-        sre->do_set_servo(g2.zigzag_out, 1094);
+    if (new_breaches && !zigzag_fence && copter.flightmode == &mode_loiter) {
+        sre->do_set_servo(g2.zigzag1_out, SRV_Channels::srv_channel(g2.zigzag1_out-1)->get_output_min());
+        spray_delay_ms = AP_HAL::micros();
+        zigzag_fence = true;
+    }
+
+    uint32_t tnow = AP_HAL::micros();
+    if (zigzag_fence && tnow - spray_delay_ms > (uint32_t)g2.zigzag_delay) {
+        sre->do_set_servo(g2.zigzag2_out, SRV_Channels::srv_channel(g2.zigzag2_out-1)->get_output_min());
+        spray_delay_ms = 0;
+        zigzag_fence = false;
     }
 
     // if there is a new breach take action

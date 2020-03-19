@@ -7,7 +7,8 @@
 */
 
 #define ZIGZAG_WP_RADIUS_CM 300
-AP_ServoRelayEvents *sre = AP::servorelayevents();
+uint32_t tchanged;
+uint8_t dest_num_stored;
 
 // initialise zigzag controller
 bool ModeZigZag::init(bool ignore_checks)
@@ -69,6 +70,10 @@ void ModeZigZag::run()
         // receive pilot's inputs, do position and attitude control
         manual_control();
     }
+
+    if (stage == WAITING_AUTO || stage == WAITING_MANUAL) {
+        save_or_move_to_destination(dest_num_stored);
+    }
 }
 
 // save current position as A (dest_num = 0) or B (dest_num = 1).  If both A and B have been saved move to the one specified
@@ -105,29 +110,42 @@ void ModeZigZag::save_or_move_to_destination(uint8_t dest_num)
             }
             break;
 
+        case WAITING_MANUAL:
+            return_to_manual_control(true);
+            break;
         case AUTO:
         case MANUAL_REGAIN:
+            stage = WAITING_AUTO;
+            copter.sre->do_set_servo(g2.zigzag2_out, SRV_Channels::srv_channel(g2.zigzag2_out-1)->get_output_max());
+            dest_num_stored = dest_num;
+            tchanged = AP_HAL::micros();
+            break;
+        case WAITING_AUTO:
             // A and B have been defined, move vehicle to destination A or B
-            Vector3f next_dest;
-            bool terr_alt;
-            if (calculate_next_dest(dest_num, stage == AUTO, next_dest, terr_alt)) {
-                wp_nav->wp_and_spline_init();
-                if (wp_nav->set_wp_destination(next_dest, terr_alt)) {
-                    stage = AUTO;
+            uint32_t tnow = AP_HAL::micros();
+            if (tnow - tchanged > (uint32_t)g2.zigzag_delay) {
+                Vector3f next_dest;
+                bool terr_alt;
+                if (calculate_next_dest(dest_num, stage == AUTO, next_dest, terr_alt)) {
+                    wp_nav->wp_and_spline_init();
+                    if (wp_nav->set_wp_destination(next_dest, terr_alt)) {
+                        stage = AUTO;
 #if SPRAYER_ENABLED == ENABLED
-                    // spray on while moving to A or B
-                    if (g2.zigzag_auto_pump_enabled) {
-                        copter.sprayer.run(true);
-                    }
+                        // spray on while moving to A or B
+                        if (g2.zigzag_auto_pump_enabled) {
+                            copter.sprayer.run(true);
+                        }
 #endif
-                    sre->do_set_servo(g2.zigzag_out, 1934);
-                    reach_wp_time_ms = 0;
-                    if (dest_num == 0) {
-                        gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to A");
-                    } else {
-                        gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to B");
+                        copter.sre->do_set_servo(g2.zigzag1_out, SRV_Channels::srv_channel(g2.zigzag1_out-1)->get_output_max());
+                        reach_wp_time_ms = 0;
+                        if (dest_num == 0) {
+                            gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to A");
+                        } else {
+                            gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to B");
+                        }
                     }
                 }
+                break;
             }
             break;
     }
@@ -137,25 +155,32 @@ void ModeZigZag::save_or_move_to_destination(uint8_t dest_num)
 void ModeZigZag::return_to_manual_control(bool maintain_target)
 {
     if (stage == AUTO) {
-        stage = MANUAL_REGAIN;
+        stage = WAITING_MANUAL;
+        copter.sre->do_set_servo(g2.zigzag1_out, SRV_Channels::srv_channel(g2.zigzag1_out-1)->get_output_min());
+        tchanged = AP_HAL::micros();
+    } else if (stage == WAITING_MANUAL) {
+        uint32_t tnow = AP_HAL::micros();
+        if (tnow - tchanged > (uint32_t)g2.zigzag_delay) {
+            stage = MANUAL_REGAIN;
 #if SPRAYER_ENABLED == ENABLED
-        // spray off
-        if (g2.zigzag_auto_pump_enabled) {
-            copter.sprayer.run(false);
-        }
-#endif
-        sre->do_set_servo(g2.zigzag_out, 1094);
-        loiter_nav->clear_pilot_desired_acceleration();
-        if (maintain_target) {
-            const Vector3f& wp_dest = wp_nav->get_wp_destination();
-            loiter_nav->init_target(wp_dest);
-            if (wp_nav->origin_and_destination_are_terrain_alt()) {
-                copter.surface_tracking.set_target_alt_cm(wp_dest.z);
+            // spray off
+            if (g2.zigzag_auto_pump_enabled) {
+                copter.sprayer.run(false);
             }
-        } else {
-            loiter_nav->init_target();
+#endif
+            copter.sre->do_set_servo(g2.zigzag2_out, SRV_Channels::srv_channel(g2.zigzag2_out-1)->get_output_min());
+            loiter_nav->clear_pilot_desired_acceleration();
+            if (maintain_target) {
+                const Vector3f& wp_dest = wp_nav->get_wp_destination();
+                loiter_nav->init_target(wp_dest);
+                if (wp_nav->origin_and_destination_are_terrain_alt()) {
+                    copter.surface_tracking.set_target_alt_cm(wp_dest.z);
+                }
+            } else {
+                loiter_nav->init_target();
+            }
+            gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: manual control");
         }
-        gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: manual control");
     }
 }
 

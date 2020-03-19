@@ -1419,7 +1419,9 @@ private:
     enum zigzag_state {
         STORING_POINTS, // storing points A and B, pilot has manual control
         AUTO,           // after A and B defined, pilot toggle the switch from one side to the other, vehicle flies autonomously
-        MANUAL_REGAIN   // pilot toggle the switch to middle position, has manual control
+        MANUAL_REGAIN,   // pilot toggle the switch to middle position, has manual control
+        WAITING_AUTO,
+        WAITING_MANUAL
     } stage;
 
     uint32_t reach_wp_time_ms = 0;  // time since vehicle reached destination (or zero if not yet reached)

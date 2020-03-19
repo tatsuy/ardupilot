@@ -973,6 +973,9 @@ private:
 
 public:
     void failsafe_check();      // failsafe.cpp
+    uint32_t spray_delay_ms = 0;
+    bool zigzag_fence = false;
+    bool zigzag_rtl = false;
 };
 
 extern Copter copter;

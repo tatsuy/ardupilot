@@ -30,7 +30,11 @@ bool Mode::do_user_takeoff(float takeoff_alt_cm, bool must_navigate)
         // this mode doesn't support user takeoff
         return false;
     }
-    if (takeoff_alt_cm <= copter.current_loc.alt) {
+    int32_t current_alt = copter.current_loc.alt;
+    if (wp_nav->rangefinder_used_and_healthy() && wp_nav->get_terrain_source() == AC_WPNav::TerrainSource::TERRAIN_FROM_RANGEFINDER) {
+        current_alt = copter.rangefinder_state.alt_cm;
+    }
+    if (takeoff_alt_cm <= current_alt) {
         // can't takeoff downwards...
         return false;
     }

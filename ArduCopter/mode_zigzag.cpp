@@ -7,8 +7,9 @@
 */
 
 #define ZIGZAG_WP_RADIUS_CM 300
-uint32_t tchanged;
+uint32_t tchanged = 0;
 uint8_t dest_num_stored;
+bool is_side;
 
 // initialise zigzag controller
 bool ModeZigZag::init(bool ignore_checks)
@@ -67,11 +68,39 @@ void ModeZigZag::run()
 
     // manual control
     if (stage == STORING_POINTS || stage == MANUAL_REGAIN) {
-        // receive pilot's inputs, do position and attitude control
-        manual_control();
+        float target_roll;
+        target_roll = channel_roll->get_control_in();
+        int8_t dest_num = 0;
+        if (target_roll > 50)
+            dest_num = 1;
+        else if (target_roll < -50)
+            dest_num = -1;
+
+        if (!is_side && dest_num != 0 && !dest_A.is_zero() && !dest_B.is_zero() && is_positive((dest_B - dest_A).length_squared())) {
+            Vector3f next_dest;
+            bool terr_alt;
+            is_side = true;
+            if (calculate_side_dest(dest_num, stage == AUTO, next_dest, terr_alt)) {
+                wp_nav->wp_and_spline_init();
+                if (wp_nav->set_wp_destination(next_dest, terr_alt)) {
+                    stage = AUTO;
+                    reach_wp_time_ms = 0;
+                    if (dest_num == 1) {
+                        gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to right");
+                    } else {
+                        gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to left");
+                    }
+                }
+            }
+        } else {
+            // receive pilot's inputs, do position and attitude control
+            manual_control();
+        }
     }
 
     if (stage == WAITING_AUTO || stage == WAITING_MANUAL) {
+        if (stage == WAITING_MANUAL)
+            manual_control();
         save_or_move_to_destination(dest_num_stored);
     }
 }
@@ -115,17 +144,20 @@ void ModeZigZag::save_or_move_to_destination(uint8_t dest_num)
             break;
         case AUTO:
         case MANUAL_REGAIN:
-            stage = WAITING_AUTO;
-            copter.sre->do_set_servo(g2.zigzag2_out, SRV_Channels::srv_channel(g2.zigzag2_out-1)->get_output_max());
-            dest_num_stored = dest_num;
-            tchanged = AP_HAL::micros();
+            if (is_side == false) {
+                stage = WAITING_AUTO;
+                copter.sre->do_set_servo(g2.zigzag2_out, SRV_Channels::srv_channel(g2.zigzag2_out-1)->get_output_max());
+                dest_num_stored = dest_num;
+                tchanged = AP_HAL::micros();
+            }
             break;
         case WAITING_AUTO:
             // A and B have been defined, move vehicle to destination A or B
             uint32_t tnow = AP_HAL::micros();
-            if (tnow - tchanged > (uint32_t)g2.zigzag_delay) {
+            if (tchanged && tnow - tchanged > (uint32_t)g2.zigzag_delay) {
                 Vector3f next_dest;
                 bool terr_alt;
+                tchanged = 0;
                 if (calculate_next_dest(dest_num, stage == AUTO, next_dest, terr_alt)) {
                     wp_nav->wp_and_spline_init();
                     if (wp_nav->set_wp_destination(next_dest, terr_alt)) {
@@ -160,7 +192,7 @@ void ModeZigZag::return_to_manual_control(bool maintain_target)
         tchanged = AP_HAL::micros();
     } else if (stage == WAITING_MANUAL) {
         uint32_t tnow = AP_HAL::micros();
-        if (tnow - tchanged > (uint32_t)g2.zigzag_delay) {
+        if (tchanged && tnow - tchanged > (uint32_t)g2.zigzag_delay) {
             stage = MANUAL_REGAIN;
 #if SPRAYER_ENABLED == ENABLED
             // spray off
@@ -180,6 +212,7 @@ void ModeZigZag::return_to_manual_control(bool maintain_target)
                 loiter_nav->init_target();
             }
             gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: manual control");
+            is_side = false;
         }
     }
 }
@@ -384,6 +417,54 @@ bool ModeZigZag::calculate_next_dest(uint8_t dest_num, bool use_wpnav_alt, Vecto
     const Vector2f closest2d = Vector2f::closest_point(curr_pos2d, perp1, perp2);
     next_dest.x = closest2d.x;
     next_dest.y = closest2d.y;
+
+    if (use_wpnav_alt) {
+        // get altitude target from waypoint controller
+        terrain_alt = wp_nav->origin_and_destination_are_terrain_alt();
+        next_dest.z = wp_nav->get_wp_destination().z;
+    } else {
+        // if we have a downward facing range finder then use terrain altitude targets
+        terrain_alt = copter.rangefinder_alt_ok() && wp_nav->rangefinder_used_and_healthy();
+        if (terrain_alt) {
+            if (!copter.surface_tracking.get_target_alt_cm(next_dest.z)) {
+                next_dest.z = copter.rangefinder_state.alt_cm_filt.get();
+            }
+        } else {
+            next_dest.z = pos_control->is_active_z() ? pos_control->get_alt_target() : curr_pos.z;
+        }
+    }
+
+    return true;
+}
+
+bool ModeZigZag::calculate_side_dest(int8_t dest_num, bool use_wpnav_alt, Vector3f& next_dest, bool& terrain_alt) const
+{
+    // sanity check dest_num
+    if (dest_num > 1) {
+        return false;
+    }
+
+    // calculate vector from A to B
+    Vector2f AB_diff = dest_B - dest_A;
+    float res = (-ahrs.sin_yaw() * AB_diff[1]) + (ahrs.cos_yaw() * -AB_diff[0]);
+
+    Vector2f AB_side;
+    if (res * dest_num > 0) {
+        AB_side = Vector2f(AB_diff[1], -AB_diff[0]);
+    } else {
+        AB_side = Vector2f(-AB_diff[1], AB_diff[0]);
+    }
+
+    // check distance between A and B
+    if (!is_positive(AB_side.length_squared())) {
+        return false;
+    }
+
+    // get distance from vehicle to start_pos
+    const Vector3f curr_pos = inertial_nav.get_position();
+    const Vector2f curr_pos2d = Vector2f(curr_pos.x, curr_pos.y);
+    next_dest.x = curr_pos2d.x + (AB_side.x * g2.zigzag_side / safe_sqrt(AB_side.length_squared()));
+    next_dest.y = curr_pos2d.y + (AB_side.y * g2.zigzag_side / safe_sqrt(AB_side.length_squared()));
 
     if (use_wpnav_alt) {
         // get altitude target from waypoint controller

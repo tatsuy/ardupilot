@@ -627,6 +627,7 @@ public:
     AP_Int8 zigzag1_out;
     AP_Int8 zigzag2_out;
     AP_Int32 zigzag_delay;
+    AP_Int32 zigzag_side;
 };
 
 extern const AP_Param::Info        var_info[];

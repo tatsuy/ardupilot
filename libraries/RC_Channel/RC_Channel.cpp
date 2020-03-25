@@ -860,6 +860,7 @@ void RC_Channel::do_aux_function(const aux_func_t ch_option, const aux_switch_po
         switch (ch_flag) {
         case HIGH: {
             SRV_Channels::set_emergency_stop(true);
+            AP::arming().disarm(AP_Arming::Method::AUXSWITCH);
 
             // log E-stop
             AP_Logger *logger = AP_Logger::get_singleton();

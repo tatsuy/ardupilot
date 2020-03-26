@@ -77,6 +77,33 @@ void ModeZigZag::run()
 
     // manual control
     if (stage == STORING_POINTS || stage == MANUAL_REGAIN) {
+        float target_roll;
+        target_roll = channel_roll->get_control_in();
+        int8_t dest_num = 0;
+        if (target_roll > 5)
+            dest_num = 1;
+        else if (target_roll < -5)
+            dest_num = -1;
+
+        if (dest_num != 0 && !dest_A.is_zero() && !dest_B.is_zero() && is_positive((dest_B - dest_A).length_squared())) {
+            Vector3f next_dest;
+            bool terr_alt;
+            if (calculate_side_dest(dest_num, false, next_dest, terr_alt)) {
+                wp_nav->wp_and_spline_init();
+                if (wp_nav->set_wp_destination(next_dest, terr_alt)) {
+                    stage = AUTO;
+                    reach_wp_time_ms = 0;
+                    if (dest_num == 1) {
+                        gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to right");
+                    } else {
+                        gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to left");
+                    }
+                }
+            }
+        } else {
+            // receive pilot's inputs, do position and attitude control
+            manual_control();
+        }
         // receive pilot's inputs, do position and attitude control
         manual_control();
     }
@@ -370,6 +397,54 @@ bool ModeZigZag::calculate_next_dest(uint8_t dest_num, bool use_wpnav_alt, Vecto
     const Vector2f closest2d = Vector2f::closest_point(curr_pos2d, perp1, perp2);
     next_dest.x = closest2d.x;
     next_dest.y = closest2d.y;
+
+    if (use_wpnav_alt) {
+        // get altitude target from waypoint controller
+        terrain_alt = wp_nav->origin_and_destination_are_terrain_alt();
+        next_dest.z = wp_nav->get_wp_destination().z;
+    } else {
+        // if we have a downward facing range finder then use terrain altitude targets
+        terrain_alt = copter.rangefinder_alt_ok() && wp_nav->rangefinder_used_and_healthy();
+        if (terrain_alt) {
+            if (!copter.surface_tracking.get_target_alt_cm(next_dest.z)) {
+                next_dest.z = copter.rangefinder_state.alt_cm_filt.get();
+            }
+        } else {
+            next_dest.z = pos_control->is_active_z() ? pos_control->get_alt_target() : curr_pos.z;
+        }
+    }
+
+    return true;
+}
+
+bool ModeZigZag::calculate_side_dest(int8_t dest_num, bool use_wpnav_alt, Vector3f& next_dest, bool& terrain_alt) const
+{
+    // sanity check dest_num
+    if (dest_num > 1) {
+        return false;
+    }
+
+    // calculate vector from A to B
+    Vector2f AB_diff = dest_B - dest_A;
+    float res = (-ahrs.sin_yaw() * AB_diff[1]) + (ahrs.cos_yaw() * -AB_diff[0]);
+
+    Vector2f AB_side;
+    if (res * dest_num > 0) {
+        AB_side = Vector2f(AB_diff[1], -AB_diff[0]);
+    } else {
+        AB_side = Vector2f(-AB_diff[1], AB_diff[0]);
+    }
+
+    // check distance between A and B
+    if (!is_positive(AB_side.length_squared())) {
+        return false;
+    }
+
+    // get distance from vehicle to start_pos
+    const Vector3f curr_pos = inertial_nav.get_position();
+    const Vector2f curr_pos2d = Vector2f(curr_pos.x, curr_pos.y);
+    next_dest.x = curr_pos2d.x + (AB_side.x * g2.zigzag_side / safe_sqrt(AB_side.length_squared()));
+    next_dest.y = curr_pos2d.y + (AB_side.y * g2.zigzag_side / safe_sqrt(AB_side.length_squared()));
 
     if (use_wpnav_alt) {
         // get altitude target from waypoint controller

@@ -982,6 +982,12 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("ZIGZAG_OUT", 60, ParametersG2, zigzag_out, 7),
 
+    // @Param: ZIGZAG_SIDE
+    // @DisplayName: Zigzag side
+    // @Description: the distance to move sideways in ZigZag mode
+    // @User: Standard
+    AP_GROUPINFO("ZIGZAG_SIDE", 61, ParametersG2, zigzag_side, 400),
+
     AP_GROUPEND
 };
 

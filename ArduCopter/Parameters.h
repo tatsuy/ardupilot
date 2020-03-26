@@ -625,6 +625,7 @@ public:
 #endif
 
     AP_Int8 zigzag_out;
+    AP_Int32 zigzag_side;
 };
 
 extern const AP_Param::Info        var_info[];

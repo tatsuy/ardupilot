@@ -9,6 +9,8 @@
 #define ZIGZAG_WP_RADIUS_CM 300
 uint32_t tchanged;
 uint8_t dest_num_stored;
+int8_t zigzag_auto;
+bool is_side;
 
 // initialise zigzag controller
 bool ModeZigZag::init(bool ignore_checks)
@@ -73,7 +75,13 @@ void ModeZigZag::run()
         } else if (reached_destination()) {
             // if vehicle has reached destination switch to manual control
             AP_Notify::events.waypoint_complete = 1;
-            return_to_manual_control(true);
+            if (is_side && zigzag_auto != 0) {
+                dest_num_stored = dest_num_stored == 0 ? 1 : 0;
+                is_side = false;
+                copter.mode_zigzag.save_or_move_to_destination(dest_num_stored);
+            } else {
+                return_to_manual_control(true);
+            }
         } else {
             auto_control();
         }
@@ -89,24 +97,22 @@ void ModeZigZag::run()
         else if (target_roll < -5)
             dest_num = -1;
 
-        if (dest_num != 0 && !dest_A.is_zero() && !dest_B.is_zero() && is_positive((dest_B - dest_A).length_squared())) {
+        if ((zigzag_auto != 0 || dest_num != 0) && !dest_A.is_zero() && !dest_B.is_zero() && is_positive((dest_B - dest_A).length_squared())) {
             Vector3f next_dest;
             bool terr_alt;
-            if (calculate_side_dest(dest_num, false, next_dest, terr_alt)) {
+            if (calculate_side_dest(zigzag_auto != 0 ? zigzag_auto : dest_num, false, next_dest, terr_alt)) {
                 wp_nav->wp_and_spline_init();
                 if (wp_nav->set_wp_destination(next_dest, terr_alt)) {
                     stage = AUTO;
+                    is_side = true;
                     reach_wp_time_ms = 0;
-                    if (dest_num == 1) {
+                    if ((zigzag_auto != 0 ? zigzag_auto : dest_num) == 1) {
                         gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to right");
                     } else {
                         gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to left");
                     }
                 }
             }
-        } else {
-            // receive pilot's inputs, do position and attitude control
-            manual_control();
         }
         // receive pilot's inputs, do position and attitude control
         manual_control();
@@ -157,6 +163,7 @@ void ModeZigZag::save_or_move_to_destination(uint8_t dest_num)
                 wp_nav->wp_and_spline_init();
                 if (wp_nav->set_wp_destination(next_dest, terr_alt)) {
                     stage = AUTO;
+                    dest_num_stored = dest_num;
 #if SPRAYER_ENABLED == ENABLED
                     // spray on while moving to A or B
                     if (g2.zigzag_auto_pump_enabled) {
@@ -174,6 +181,11 @@ void ModeZigZag::save_or_move_to_destination(uint8_t dest_num)
             }
             break;
     }
+}
+
+void ModeZigZag::move_to_side(int8_t dest_num)
+{
+    zigzag_auto = dest_num;
 }
 
 // return manual control to the pilot
@@ -198,6 +210,7 @@ void ModeZigZag::return_to_manual_control(bool maintain_target)
         } else {
             loiter_nav->init_target();
         }
+        is_side = false;
         gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: manual control");
     }
 }

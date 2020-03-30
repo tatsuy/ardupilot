@@ -1398,6 +1398,7 @@ public:
 
     // save current position as A (dest_num = 0) or B (dest_num = 1).  If both A and B have been saved move to the one specified
     void save_or_move_to_destination(uint8_t dest_num);
+    void move_to_side(int8_t dest_num);
 
     // return manual control to the pilot
     void return_to_manual_control(bool maintain_target);

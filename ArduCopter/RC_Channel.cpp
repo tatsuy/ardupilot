@@ -91,6 +91,7 @@ void RC_Channel_Copter::init_aux_function(const aux_func_t ch_option, const aux_
     case AUX_FUNC::WINCH_CONTROL:
     case AUX_FUNC::ZIGZAG:
     case AUX_FUNC::ZIGZAG_SaveWP:
+    case AUX_FUNC::ZIGZAG_Side:
         break;
     case AUX_FUNC::ACRO_TRAINER:
     case AUX_FUNC::ATTCON_ACCEL_LIM:
@@ -490,6 +491,24 @@ void RC_Channel_Copter::do_aux_function(const aux_func_t ch_option, const aux_sw
                     case HIGH:
                         copter.mode_zigzag.save_or_move_to_destination(1);
                         break;
+                }
+            }
+#endif
+            break;
+
+        case AUX_FUNC::ZIGZAG_Side:
+#if MODE_ZIGZAG_ENABLED == ENABLED
+            if (copter.flightmode == &copter.mode_zigzag) {
+                switch (ch_flag) {
+                case LOW:
+                    copter.mode_zigzag.move_to_side(1);
+                    break;
+                case MIDDLE:
+                    copter.mode_zigzag.move_to_side(0);
+                    break;
+                case HIGH:
+                    copter.mode_zigzag.move_to_side(-1);
+                    break;
                 }
             }
 #endif

@@ -7,7 +7,8 @@
 */
 
 #define ZIGZAG_WP_RADIUS_CM 300
-AP_ServoRelayEvents *sre = AP::servorelayevents();
+uint32_t tchanged;
+uint8_t dest_num_stored;
 
 // initialise zigzag controller
 bool ModeZigZag::init(bool ignore_checks)
@@ -50,6 +51,9 @@ void ModeZigZag::exit()
     if (g2.zigzag_auto_pump_enabled) {
         copter.sprayer.run(false);
     }
+    copter.sre->do_set_servo(g2.zigzag_spray, SRV_Channels::srv_channel(g2.zigzag_spray-1)->get_output_min());
+    copter.spray_delay_ms = AP_HAL::micros();
+    copter.zigzag_rtl = true;
 #endif
 }
 
@@ -140,6 +144,7 @@ void ModeZigZag::save_or_move_to_destination(uint8_t dest_num)
             // if both A and B have been stored advance state
             if (!dest_A.is_zero() && !dest_B.is_zero() && is_positive((dest_B - dest_A).length_squared())) {
                 stage = MANUAL_REGAIN;
+                copter.sre->do_set_servo(g2.zigzag_impel, SRV_Channels::srv_channel(g2.zigzag_impel-1)->get_output_max());
             }
             break;
 
@@ -158,7 +163,7 @@ void ModeZigZag::save_or_move_to_destination(uint8_t dest_num)
                         copter.sprayer.run(true);
                     }
 #endif
-                    sre->do_set_servo(g2.zigzag_out, 1934);
+                    copter.sre->do_set_servo(g2.zigzag_spray, SRV_Channels::srv_channel(g2.zigzag_spray-1)->get_output_max());
                     reach_wp_time_ms = 0;
                     if (dest_num == 0) {
                         gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to A");
@@ -182,7 +187,7 @@ void ModeZigZag::return_to_manual_control(bool maintain_target)
             copter.sprayer.run(false);
         }
 #endif
-        sre->do_set_servo(g2.zigzag_out, 1094);
+        copter.sre->do_set_servo(g2.zigzag_spray, SRV_Channels::srv_channel(g2.zigzag_spray-1)->get_output_min());
         loiter_nav->clear_pilot_desired_acceleration();
         if (maintain_target) {
             const Vector3f& wp_dest = wp_nav->get_wp_destination();

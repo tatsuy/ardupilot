@@ -259,12 +259,6 @@ bool Copter::set_mode(Mode::Number mode, ModeReason reason)
     // perform any cleanup required by previous flight mode
     exit_mode(flightmode, new_flightmode);
 
-    if ((control_mode == Mode::Number::AUTO && mode != Mode::Number::AUTO) ||
-            (control_mode == Mode::Number::ZIGZAG && mode != Mode::Number::ZIGZAG) ||
-            mode == Mode::Number::RTL) {
-        sre->do_set_servo(g2.zigzag_out, 1094);
-    }
-
     // store previous flight mode (only used by tradeheli's autorotation)
     prev_control_mode = control_mode;
 
@@ -293,6 +287,8 @@ bool Copter::set_mode(Mode::Number mode, ModeReason reason)
     // update notify object
     notify_flight_mode();
 
+    copter.avoid.set_param((uint32_t)(g2.zigzag_delay * 1000000), g2.zigzag_spray, g2.zigzag_impel);
+
     // return success
     return true;
 }
@@ -315,6 +311,13 @@ void Copter::update_flight_mode()
 {
     surface_tracking.invalidate_for_logging();  // invalidate surface tracking alt, flight mode will set to true if used
 
+    uint32_t tnow = AP_HAL::micros();
+    if (copter.zigzag_rtl && tnow - copter.spray_delay_ms > (uint32_t)(g2.zigzag_delay * 1000000)) {
+        copter.sre->do_set_servo(g2.zigzag_impel, SRV_Channels::srv_channel(g2.zigzag_impel-1)->get_output_min());
+        copter.spray_delay_ms = 0;
+        copter.zigzag_rtl = false;
+    }
+
     flightmode->run();
 }
 
@@ -334,6 +337,10 @@ void Copter::exit_mode(Mode *&old_flightmode,
         if (mode_auto.mission.state() == AP_Mission::MISSION_RUNNING) {
             mode_auto.mission.stop();
         }
+        copter.sre->do_set_servo(g2.zigzag_spray, SRV_Channels::srv_channel(g2.zigzag_spray-1)->get_output_min());
+        copter.spray_delay_ms = AP_HAL::micros();
+        copter.zigzag_rtl = true;
+
 #if MOUNT == ENABLED
         camera_mount.set_mode_to_default();
 #endif  // MOUNT == ENABLED

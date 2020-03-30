@@ -624,8 +624,10 @@ public:
     AP_Int8 zigzag_auto_pump_enabled;
 #endif
 
-    AP_Int8 zigzag_out;
+    AP_Int8 zigzag_spray;
+    AP_Int8 zigzag_impel;
     AP_Int32 zigzag_side;
+    AP_Float zigzag_delay;
 };
 
 extern const AP_Param::Info        var_info[];

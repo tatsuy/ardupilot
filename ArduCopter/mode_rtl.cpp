@@ -22,6 +22,10 @@ bool ModeRTL::init(bool ignore_checks)
     _state = RTL_Starting;
     _state_complete = true; // see run() method below
     terrain_following_allowed = !copter.failsafe.terrain;
+
+    copter.sre->do_set_servo(g2.zigzag_spray, SRV_Channels::srv_channel(g2.zigzag_spray-1)->get_output_min());
+    copter.spray_delay_ms = AP_HAL::micros();
+    copter.zigzag_fence = true;
     return true;
 }
 

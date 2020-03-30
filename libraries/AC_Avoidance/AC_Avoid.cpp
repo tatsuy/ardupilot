@@ -789,9 +789,10 @@ void AC_Avoid::adjust_velocity_polygon(float kP, float accel_cmss, Vector2f &des
                 Vector2f limit_direction = intersection - position_xy;
                 const float limit_distance_cm = limit_direction.length();
                 if (!is_zero(limit_distance_cm)) {
-                    if (limit_distance_cm <= margin_cm * 1.5) {
-                        AP_ServoRelayEvents *sre = AP::servorelayevents();
-                        sre->do_set_servo(7, 1094);
+                    if (!zigzag_avoid && limit_distance_cm <= margin_cm * 1.5) {
+                        sre->do_set_servo(_param_shutter, SRV_Channels::srv_channel(_param_shutter-1)->get_output_min());
+                        tchanged = AP_HAL::micros();
+                        zigzag_avoid = true;
                     }
                     if (limit_distance_cm <= margin_cm) {
                         // we are within the margin so stop vehicle
@@ -806,6 +807,12 @@ void AC_Avoid::adjust_velocity_polygon(float kP, float accel_cmss, Vector2f &des
                     // i.e. do not adjust velocity.
                     return;
                 }
+            }
+            uint32_t tnow = AP_HAL::micros();
+            if (zigzag_avoid && tnow - tchanged > _param_delay) {
+                sre->do_set_servo(_param_impeller, SRV_Channels::srv_channel(_param_impeller-1)->get_output_min());
+                tchanged = 0;
+                zigzag_avoid = false;
             }
         }
     }

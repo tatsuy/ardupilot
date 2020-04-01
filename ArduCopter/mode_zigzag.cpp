@@ -371,7 +371,7 @@ bool ModeZigZag::reached_destination()
     if (reach_wp_time_ms == 0) {
         reach_wp_time_ms = now;
     }
-    return ((now - reach_wp_time_ms) > 1000);
+    return ((now - reach_wp_time_ms) > (uint32_t)g2.zigzag_wp_delay);
 }
 
 // calculate next destination according to vector A-B and current position

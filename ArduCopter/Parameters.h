@@ -628,6 +628,7 @@ public:
     AP_Int8 zigzag_impel;
     AP_Int32 zigzag_side;
     AP_Float zigzag_delay;
+    AP_Int16 zigzag_wp_delay;
 };
 
 extern const AP_Param::Info        var_info[];

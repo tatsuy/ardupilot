@@ -1396,6 +1396,8 @@ public:
     bool allows_arming(bool from_gcs) const override { return true; }
     bool is_autopilot() const override { return true; }
 
+    bool is_manual;
+
     // save current position as A (dest_num = 0) or B (dest_num = 1).  If both A and B have been saved move to the one specified
     void save_or_move_to_destination(uint8_t dest_num);
     void move_to_side(int8_t dest_num);

@@ -97,7 +97,7 @@ void ModeZigZag::run()
         else if (target_roll < -5)
             dest_num = -1;
 
-        if ((zigzag_auto != 0 || dest_num != 0) && !dest_A.is_zero() && !dest_B.is_zero() && is_positive((dest_B - dest_A).length_squared())) {
+        if (is_manual && (zigzag_auto != 0 || dest_num != 0) && !dest_A.is_zero() && !dest_B.is_zero() && is_positive((dest_B - dest_A).length_squared())) {
             Vector3f next_dest;
             bool terr_alt;
             if (calculate_side_dest(zigzag_auto != 0 ? zigzag_auto : dest_num, false, next_dest, terr_alt)) {

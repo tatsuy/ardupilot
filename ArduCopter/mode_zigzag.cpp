@@ -97,7 +97,9 @@ void ModeZigZag::run()
         else if (target_roll < -5)
             dest_num = -1;
 
-        if (is_manual && (zigzag_auto != 0 || dest_num != 0) && !dest_A.is_zero() && !dest_B.is_zero() && is_positive((dest_B - dest_A).length_squared())) {
+        bool side_bool = false;
+
+        if (is_ab && (zigzag_auto != 0 || dest_num != 0) && !dest_A.is_zero() && !dest_B.is_zero() && is_positive((dest_B - dest_A).length_squared())) {
             Vector3f next_dest;
             bool terr_alt;
             if (calculate_side_dest(zigzag_auto != 0 ? zigzag_auto : dest_num, false, next_dest, terr_alt)) {
@@ -105,6 +107,7 @@ void ModeZigZag::run()
                 if (wp_nav->set_wp_destination(next_dest, terr_alt)) {
                     stage = AUTO;
                     is_side = true;
+                    side_bool = true;
                     reach_wp_time_ms = 0;
                     if ((zigzag_auto != 0 ? zigzag_auto : dest_num) == 1) {
                         gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to right");
@@ -114,8 +117,11 @@ void ModeZigZag::run()
                 }
             }
         }
-        // receive pilot's inputs, do position and attitude control
-        manual_control();
+
+        if (!side_bool){
+            // receive pilot's inputs, do position and attitude control
+            manual_control();
+        }
     }
 }
 

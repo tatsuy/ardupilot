@@ -77,6 +77,9 @@ void Copter::fence_check()
                             set_mode(Mode::Number::LAND, ModeReason::FENCE_BREACHED);
                         }
                         break;
+                    case AC_FENCE_ACTION_LOITER:
+                        set_mode(Mode::Number::LOITER, ModeReason::FENCE_BREACHED);
+                        break;
                     }
                 }
             }

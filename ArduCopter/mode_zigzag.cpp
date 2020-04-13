@@ -185,7 +185,12 @@ void ModeZigZag::save_or_move_to_destination(uint8_t dest_num)
 
 void ModeZigZag::move_to_side(int8_t dest_num)
 {
-    zigzag_auto = dest_num;
+    if ((copter.fence.get_enabled_fences() & AC_FENCE_TYPE_POLYGON) > 0) {
+        zigzag_auto = dest_num;
+    } else {
+        gcs().send_text(MAV_SEVERITY_INFO, "Polygon fence is not enabled");
+        zigzag_auto = 0;
+    }
 }
 
 // return manual control to the pilot

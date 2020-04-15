@@ -156,6 +156,9 @@ void ModeZigZag::save_or_move_to_destination(uint8_t dest_num)
     switch (stage) {
 
         case STORING_POINTS:
+            if (!motors->armed()) {
+                break;
+            }
             if (dest_num == 0) {
                 // store point A
                 dest_A.x = curr_pos.x;

@@ -8,6 +8,7 @@
 
 #define ZIGZAG_WP_RADIUS_CM 300
 uint32_t tchanged;
+uint32_t tchanged_stop;
 uint8_t dest_num_stored;
 int8_t zigzag_auto;
 bool is_side;
@@ -91,6 +92,12 @@ void ModeZigZag::run()
         if (tchanged && now - tchanged > (uint32_t)g2.zigzag_spray_delay) {
             copter.sre->do_set_servo(g2.zigzag_spray, SRV_Channels::srv_channel(g2.zigzag_spray-1)->get_output_max());
             tchanged = 0;
+            tchanged_stop = 0;
+        }
+        if (tchanged_stop && now - tchanged_stop > (uint32_t)g2.zigzag_spray_stop_delay) {
+            copter.sre->do_set_servo(g2.zigzag_spray, SRV_Channels::srv_channel(g2.zigzag_spray-1)->get_output_min());
+            tchanged_stop = 0;
+            tchanged = 0;
         }
     }
 
@@ -116,6 +123,7 @@ void ModeZigZag::run()
                     is_side = true;
                     side_bool = true;
                     tchanged = 0;
+                    tchanged_stop = 0;
                     reach_wp_time_ms = 0;
                     if ((zigzag_auto != 0 ? zigzag_auto : dest_num) == 1) {
                         gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to right");
@@ -179,6 +187,7 @@ void ModeZigZag::save_or_move_to_destination(uint8_t dest_num)
                     stage = AUTO;
                     dest_num_stored = dest_num;
                     tchanged = AP_HAL::millis();
+                    tchanged_stop = 0;
 #if SPRAYER_ENABLED == ENABLED
                     // spray on while moving to A or B
                     if (g2.zigzag_auto_pump_enabled) {
@@ -383,6 +392,11 @@ bool ModeZigZag::reached_destination()
     // check distance to destination
     if (wp_nav->get_wp_distance_to_destination() > ZIGZAG_WP_RADIUS_CM) {
         return false;
+    }
+
+    if (!tchanged_stop) {
+        tchanged = 0;
+        tchanged_stop = AP_HAL::millis();
     }
 
     // wait at least one second

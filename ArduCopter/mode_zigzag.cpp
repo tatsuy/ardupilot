@@ -85,6 +85,13 @@ void ModeZigZag::run()
         } else {
             auto_control();
         }
+
+        // wait at least one second
+        uint32_t now = AP_HAL::millis();
+        if (tchanged && now - tchanged > (uint32_t)g2.zigzag_spray_delay) {
+            copter.sre->do_set_servo(g2.zigzag_spray, SRV_Channels::srv_channel(g2.zigzag_spray-1)->get_output_max());
+            tchanged = 0;
+        }
     }
 
     // manual control
@@ -108,6 +115,7 @@ void ModeZigZag::run()
                     stage = AUTO;
                     is_side = true;
                     side_bool = true;
+                    tchanged = 0;
                     reach_wp_time_ms = 0;
                     if ((zigzag_auto != 0 ? zigzag_auto : dest_num) == 1) {
                         gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to right");
@@ -170,13 +178,13 @@ void ModeZigZag::save_or_move_to_destination(uint8_t dest_num)
                 if (wp_nav->set_wp_destination(next_dest, terr_alt)) {
                     stage = AUTO;
                     dest_num_stored = dest_num;
+                    tchanged = AP_HAL::millis();
 #if SPRAYER_ENABLED == ENABLED
                     // spray on while moving to A or B
                     if (g2.zigzag_auto_pump_enabled) {
                         copter.sprayer.run(true);
                     }
 #endif
-                    copter.sre->do_set_servo(g2.zigzag_spray, SRV_Channels::srv_channel(g2.zigzag_spray-1)->get_output_max());
                     reach_wp_time_ms = 0;
                     if (dest_num == 0) {
                         gcs().send_text(MAV_SEVERITY_INFO, "ZigZag: moving to A");

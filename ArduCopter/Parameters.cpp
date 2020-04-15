@@ -976,6 +976,12 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     AP_GROUPINFO("ZIGZAG_AUTO_PUMP", 38, ParametersG2, zigzag_auto_pump_enabled, ZIGZAG_AUTO_PUMP_ENABLED),
 #endif
 
+    // @Param: ZIGZAG_SPR_DELAY
+    // @DisplayName: Zigzag spray delay
+    // @Description: the delay for spray
+    // @User: Standard
+    AP_GROUPINFO("ZIGZAG_SPR_DELAY", 58, ParametersG2, zigzag_spray_delay, 500),
+
     // @Param: ZIGZAG_WP_DELAY
     // @DisplayName: Zigzag wp delay
     // @Description: the delay for wp

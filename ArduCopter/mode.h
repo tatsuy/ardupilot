@@ -1417,6 +1417,8 @@ public:
     // return manual control to the pilot
     void return_to_manual_control(bool maintain_target);
 
+    static const struct AP_Param::GroupInfo var_info[];
+
 protected:
 
     const char *name() const override { return "ZIGZAG"; }
@@ -1436,6 +1438,17 @@ private:
     Vector2f dest_B;    // in NEU frame in cm relative to ekf origin
     Vector3f current_dest; // current target destination (use for resume after suspending)
     bool current_terr_alt;
+
+    // parameters
+    AP_Int8         _enabled;               ///< top level enable/disable control
+#if SPRAYER_ENABLED == ENABLED
+    // auto pump enable/disable
+    AP_Int8 _spray_enabled;
+#endif
+    AP_Int8 _wp_delay;
+    AP_Float _side_dist;
+    AP_Int8 _direction;
+    AP_Int16 _line_num;
 
     enum ZigZagState {
         STORING_POINTS, // storing points A and B, pilot has manual control

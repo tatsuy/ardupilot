@@ -132,6 +132,8 @@ private:
 
     // variables for navigation
     uint32_t _last_update_ms;       // system time of last call to update
+    AP_Int32 _steering_delay;       // the delay after steering
+    uint32_t _last_steer_ms;        // system time of completing steering
     Location _origin;               // origin Location (vehicle will travel from the origin to the destination)
     Location _destination;          // destination Location when in Guided_WP
     bool _orig_and_dest_valid;      // true if the origin and destination have been set

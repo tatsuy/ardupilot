@@ -82,6 +82,14 @@ const AP_Param::GroupInfo AR_WPNav::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("SPEED_MIN", 6, AR_WPNav, _speed_min, 0),
 
+    // @Param: PIVOT_DELAY
+    // @DisplayName: Pivot delay
+    // @Description: pivot delay
+    // @Units: ms
+    // @Range: 0 10000
+    // @User: Standard
+    AP_GROUPINFO("PIVOT_DELAY", 7, AR_WPNav, _steering_delay, 2000),
+
     AP_GROUPEND
 };
 
@@ -101,7 +109,13 @@ void AR_WPNav::update(float dt)
     if (!hal.util->get_soft_armed() || !_orig_and_dest_valid || !AP::ahrs().get_position(current_loc) || !_atc.get_forward_speed(speed)) {
         _desired_speed_limited = _atc.get_desired_speed_accel_limited(0.0f, dt);
         _desired_turn_rate_rads = 0.0f;
+        _last_steer_ms = 0;
         return;
+    }
+
+    if (_pivot_active && _last_steer_ms > 0 && AP_HAL::millis() - _last_steer_ms > (uint32_t)_steering_delay) {
+        _pivot_active = false;
+        _last_steer_ms = 0;
     }
 
     // if no recent calls initialise desired_speed_limited to current speed
@@ -305,7 +319,10 @@ bool AR_WPNav::use_pivot_steering(float yaw_error_cd)
 
     // if within 10 degrees of the target heading, exit pivot steering
     if (yaw_error < 10.0f) {
-        _pivot_active = false;
+        //_pivot_active = false;
+        if (!_last_steer_ms) {
+            _last_steer_ms = AP_HAL::millis();
+        }
         return false;
     }
 

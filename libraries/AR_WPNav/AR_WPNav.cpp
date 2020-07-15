@@ -82,6 +82,24 @@ const AP_Param::GroupInfo AR_WPNav::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("SPEED_MIN", 6, AR_WPNav, _speed_min, 0),
 
+    // @Param: RADIUS_MAX
+    // @DisplayName: Waypoint radius max
+    // @Description: waypoint radius max
+    // @Units: m
+    // @Range: 0 100
+    // @Increment: 0.1
+    // @User: Standard
+    AP_GROUPINFO("RADIUS_MAX", 7, AR_WPNav, _radius_max, AR_WPNAV_RADIUS_DEFAULT),
+
+    // @Param: RADIUS_MIN
+    // @DisplayName: Waypoint radius min
+    // @Description: waypoint radius min
+    // @Units: m
+    // @Range: 0 100
+    // @Increment: 0.1
+    // @User: Standard
+    AP_GROUPINFO("RADIUS_MIN", 8, AR_WPNav, _radius_min, 0.1),
+
     AP_GROUPEND
 };
 
@@ -149,11 +167,17 @@ void AR_WPNav::update(float dt)
         }
     }
 
+    if (is_zero(_initial_distance_to_destination) && !is_zero(_distance_to_destination)) {
+        _initial_distance_to_destination = _distance_to_destination;
+        _radius = constrain_float(_initial_distance_to_destination / 3.0f, _radius_min, _radius_max);
+    }
+
     // check if vehicle has reached the destination
     const bool near_wp = _distance_to_destination <= _radius;
     const bool past_wp = !_oa_active && current_loc.past_interval_finish_line(_origin, _destination);
     if (!_reached_destination && (near_wp || past_wp)) {
        _reached_destination = true;
+       _initial_distance_to_destination = 0;
     }
 
     // handle stopping vehicle if avoidance has failed

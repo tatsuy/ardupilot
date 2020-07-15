@@ -116,6 +116,8 @@ private:
     AP_Float _speed_max;            // target speed between waypoints in m/s
     AP_Float _speed_min;            // target speed minimum in m/s.  Vehicle will not slow below this speed for corners
     AP_Float _radius;               // distance in meters from a waypoint when we consider the waypoint has been reached
+    AP_Float _radius_max;
+    AP_Float _radius_min;
     AP_Float _overshoot;            // maximum horizontal overshoot in meters
     AP_Int16 _pivot_angle;          // angle error that leads to pivot turn
     AP_Int16 _pivot_rate;           // desired turn rate during pivot turns in deg/sec
@@ -149,6 +151,7 @@ private:
 
     // variables for reporting
     float _distance_to_destination; // distance from vehicle to final destination in meters
+    float _initial_distance_to_destination; // distance from vehicle to initial destination in meters
     bool _reached_destination;      // true once the vehicle has reached the destination
 
     // object avoidance variables

@@ -84,6 +84,8 @@ public:
 
     // saveable rate of each stream
     AP_Int16        streamRates[GCS_MAVLINK_NUM_STREAM_RATES];
+
+    AP_Int8         _severity_level;
 };
 
 ///

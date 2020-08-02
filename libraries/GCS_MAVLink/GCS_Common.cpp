@@ -1953,8 +1953,10 @@ void GCS::service_statustext(void)
                 // something is queued on a port and that's the port index we're looped at
                 mavlink_channel_t chan_index = (mavlink_channel_t)(MAVLINK_COMM_0+i);
                 if (HAVE_PAYLOAD_SPACE(chan_index, STATUSTEXT)) {
-                    // we have space so send then clear that channel bit on the mask
-                    mavlink_msg_statustext_send(chan_index, statustext->msg.severity, statustext->msg.text, statustext->msg.id, statustext->msg.chunk_seq);
+                    if (statustext->msg.severity <= chan_parameters[chan_index]._severity_level) {
+                        // we have space so send then clear that channel bit on the mask
+                        mavlink_msg_statustext_send(chan_index, statustext->msg.severity, statustext->msg.text, statustext->msg.id, statustext->msg.chunk_seq);
+                    }
                     statustext->bitmask &= ~chan_bit;
                 }
             }

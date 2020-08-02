@@ -264,6 +264,13 @@ const AP_Param::GroupInfo GCS_MAVLINK_Parameters::var_info[] = {
     // @Increment: 1
     // @User: Advanced
     AP_GROUPINFO("PARAMS",   8, GCS_MAVLINK_Parameters, streamRates[8],  10),
+
+    // @Param: SEV_LVL
+    // @DisplayName: Statustext severity level to GCS
+    // @Description: Only send statustext with a security level higher than the set value to GCS. Set to -1 to not send the statustext message.
+    // @Range -1 7
+    // @User: Advanced
+    AP_GROUPINFO("SEV_LVL", 10, GCS_MAVLINK_Parameters, _severity_level, MAV_SEVERITY_INFO),
     AP_GROUPEND
 };
 

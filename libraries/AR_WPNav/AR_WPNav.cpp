@@ -156,10 +156,14 @@ void AR_WPNav::update(float dt)
     }
 
     // check if vehicle has reached the destination
-    const bool near_wp = _distance_to_destination <= _radius;
-    const bool past_wp = !_oa_active && current_loc.past_interval_finish_line(_origin, _destination);
-    if (!_reached_destination && (near_wp || past_wp)) {
-       _reached_destination = true;
+    if (!_reached_destination) {
+        // reached destination if vehicle is within the waypoint radius
+        // or not doing avoidance (which can lead to the vehicle taking a very roundabout path) and
+        // the distance along the track is within the waypoint radius of the destination
+        if ((_distance_to_destination <= _radius) ||
+            (!_oa_active && (_origin.get_distance(_destination) * (1.0f - current_loc.line_path_proportion(_origin, _destination)) <= _radius))) {
+            _reached_destination = true;
+        }
     }
 
     // handle stopping vehicle if avoidance has failed

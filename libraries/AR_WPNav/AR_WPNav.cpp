@@ -150,7 +150,7 @@ void AR_WPNav::update(float dt)
     // check if vehicle is in recovering state after switching off OA
     if (!_oa_active && _oa_was_active) {
         if (oa->get_options() & AP_OAPathPlanner::OA_OPTION_WP_RESET) {
-            //reset wp origin to vehicles current location
+            // reset wp origin to vehicles current location
             _origin = current_loc;
         }
     }

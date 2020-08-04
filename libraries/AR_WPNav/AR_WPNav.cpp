@@ -92,6 +92,14 @@ const AP_Param::GroupInfo AR_WPNav::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("L1_SPEED_MIN", 7, AR_WPNav, _L1_speed_min, 0),
 
+    // @Param: STEER_DELAY
+    // @DisplayName: Delay after pivot turn
+    // @Description: The delay after pivot turn
+    // @Units: ms
+    // @Range: 0 10000
+    // @User: Standard
+    AP_GROUPINFO("STEER_DELAY", 8, AR_WPNav, _steer_delay_ms, 1000),
+
     AP_GROUPEND
 };
 
@@ -154,6 +162,11 @@ void AR_WPNav::update(float dt)
     // if object avoidance is active check if vehicle should pivot towards destination
     if (_oa_active) {
         update_pivot_active_flag();
+    }
+
+    if (_pivot_steer_ms && AP_HAL::millis() - _pivot_steer_ms > (uint32_t)_steer_delay_ms) {
+        _pivot_active = false;
+        _pivot_steer_ms = 0;
     }
 
     // check if vehicle is in recovering state after switching off OA
@@ -330,7 +343,9 @@ void AR_WPNav::update_pivot_active_flag()
 
     // if within 10 degrees of the target heading, exit pivot steering
     if (yaw_error < AR_WPNAV_PIVOT_ANGLE_ACCURACY && is_zero(_desired_speed_limited)) {
-        _pivot_active = false;
+        if (!_pivot_steer_ms) {
+            _pivot_steer_ms = AP_HAL::millis();
+        }
         return;
     }
 }

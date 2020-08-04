@@ -161,7 +161,7 @@ void AR_WPNav::update(float dt)
         // or not doing avoidance (which can lead to the vehicle taking a very roundabout path) and
         // the distance along the track is within the waypoint radius of the destination
         if ((_distance_to_destination <= _radius) ||
-            (!_oa_active && (_origin.get_distance(_destination) * (1.0f - current_loc.line_path_proportion(_origin, _destination)) <= _radius))) {
+            (!_oa_active && (_dist_along_track_to_dest <= _radius))) {
             _reached_destination = true;
         }
     }
@@ -339,6 +339,7 @@ void AR_WPNav::update_distance_and_bearing_to_destination()
     Location current_loc;
     if (!_orig_and_dest_valid || !AP::ahrs().get_position(current_loc)) {
         _distance_to_destination = 0.0f;
+        _dist_along_track_to_dest = 0.0f;
         _wp_bearing_cd = 0.0f;
 
         // update OA adjusted values
@@ -348,13 +349,16 @@ void AR_WPNav::update_distance_and_bearing_to_destination()
     }
     _distance_to_destination = current_loc.get_distance(_destination);
     _wp_bearing_cd = current_loc.get_bearing_to(_destination);
+    _dist_along_track_to_dest = MAX(0.0f, _origin.get_distance(_destination) * (1.0f - current_loc.line_path_proportion(_origin, _destination)));
 
     // update OA adjusted values
     if (_oa_active) {
         _oa_distance_to_destination = current_loc.get_distance(_oa_destination);
+        _oa_dist_along_track_to_dest = MAX(0.0f, _oa_origin.get_distance(_oa_destination) * (1.0f - current_loc.line_path_proportion(_oa_origin, _oa_destination)));
         _oa_wp_bearing_cd = current_loc.get_bearing_to(_oa_destination);
     } else {
         _oa_distance_to_destination = _distance_to_destination;
+        _oa_dist_along_track_to_dest = _dist_along_track_to_dest;
         _oa_wp_bearing_cd = _wp_bearing_cd;
     }
 }

@@ -142,6 +142,7 @@ private:
     bool _orig_and_dest_valid;      // true if the origin and destination have been set
     bool _reversed;                 // execute the mission by backing up
     float _desired_speed_final;     // desired speed in m/s when we reach the destination
+    float _dist_along_track_to_dest;// remaining distance to destination from closest point on track
 
     // main outputs from navigation library
     float _desired_speed;           // desired speed in m/s
@@ -161,5 +162,6 @@ private:
     Location _oa_origin;            // intermediate origin during avoidance
     Location _oa_destination;       // intermediate destination during avoidance
     float _oa_distance_to_destination; // OA (object avoidance) distance from vehicle to _oa_destination in meters
+    float _oa_dist_along_track_to_dest;// remaining distance to _oa_destination from closest point on track
     float _oa_wp_bearing_cd;        // OA adjusted heading to _oa_destination in centi-degrees
 };

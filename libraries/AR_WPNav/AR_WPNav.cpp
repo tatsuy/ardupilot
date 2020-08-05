@@ -83,6 +83,15 @@ const AP_Param::GroupInfo AR_WPNav::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("SPEED_MIN", 6, AR_WPNav, _speed_min, 0),
 
+    // @Param: L1_SPEED_MIN
+    // @DisplayName: Waypoint L1 controller speed minimum
+    // @Description: L1 controller is used when vehicle is travelling above this speed.  Below this speed a simpler heading controller is used
+    // @Units: m/s
+    // @Range: 0 1
+    // @Increment: 0.01
+    // @User: Standard
+    AP_GROUPINFO("L1_SPEED_MIN", 7, AR_WPNav, _L1_speed_min, 0),
+
     AP_GROUPEND
 };
 
@@ -395,7 +404,15 @@ void AR_WPNav::update_steering(const Location& current_loc, float current_speed)
             _desired_heading_cd = wrap_360_cd(_desired_heading_cd + 18000);
         }
         _cross_track_error = _nav_controller.crosstrack_error();
-        _desired_turn_rate_rads = _atc.get_turn_rate_from_lat_accel(_desired_lat_accel, current_speed);
+
+        // calculate turn rate
+        float speed = 0.0f;
+        if (_atc.get_forward_speed(speed) && (fabsf(speed) < _L1_speed_min)) {
+            // if moving slowly the lateral acceleration becomes infinite so use heading controller instead
+            _desired_turn_rate_rads = _atc.get_turn_rate_from_heading(radians(_desired_heading_cd * 0.01f), 0.0f);
+        } else {
+            _desired_turn_rate_rads = _atc.get_turn_rate_from_lat_accel(_desired_lat_accel, current_speed);
+        }
     }
 }
 

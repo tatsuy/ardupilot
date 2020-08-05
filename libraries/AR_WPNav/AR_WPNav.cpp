@@ -442,8 +442,8 @@ void AR_WPNav::update_desired_speed(float dt)
     apply_speed_min(des_speed_lim);
 
     // limit speed based on distance to waypoint and max acceleration/deceleration
-    if (is_positive(_oa_distance_to_destination) && is_positive(_atc.get_decel_max())) {
-        const float dist_speed_max = safe_sqrt(2.0f * _oa_distance_to_destination * _atc.get_decel_max() + sq(_desired_speed_final));
+    if (is_positive(_oa_dist_along_track_to_dest) && is_positive(_atc.get_decel_max())) {
+        const float dist_speed_max = safe_sqrt(2.0f * _oa_dist_along_track_to_dest * _atc.get_decel_max() + sq(_desired_speed_final));
         des_speed_lim = constrain_float(des_speed_lim, -dist_speed_max, dist_speed_max);
     }
 

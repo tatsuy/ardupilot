@@ -320,7 +320,7 @@ void AR_WPNav::update_pivot_active_flag()
     }
 
     // if within 10 degrees of the target heading, exit pivot steering
-    if (yaw_error < AR_WPNAV_PIVOT_ANGLE_ACCURACY) {
+    if (yaw_error < AR_WPNAV_PIVOT_ANGLE_ACCURACY && is_zero(_desired_speed_limited)) {
         _pivot_active = false;
         return;
     }

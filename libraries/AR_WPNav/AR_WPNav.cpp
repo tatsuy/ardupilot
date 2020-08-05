@@ -370,9 +370,15 @@ void AR_WPNav::update_steering(const Location& current_loc, float current_speed)
     // calculate desired turn rate and update desired heading
     if (_pivot_active) {
         _cross_track_error = calc_crosstrack_error(current_loc);
-        _desired_heading_cd = _reversed ? wrap_360_cd(_oa_wp_bearing_cd + 18000) : _oa_wp_bearing_cd;;
         _desired_lat_accel = 0.0f;
-        _desired_turn_rate_rads = _atc.get_turn_rate_from_heading(radians(_desired_heading_cd * 0.01f), radians(_pivot_rate));
+        if (!is_zero(_desired_speed_limited)) {
+            // hold current heading until vehicle stops
+            _desired_turn_rate_rads = 0.0f;
+        } else {
+            // turn towards next waypoint
+            _desired_heading_cd = _reversed ? wrap_360_cd(_oa_wp_bearing_cd + 18000) : _oa_wp_bearing_cd;;
+            _desired_turn_rate_rads = _atc.get_turn_rate_from_heading(radians(_desired_heading_cd * 0.01f), radians(_pivot_rate));
+        }
 
         // update flag so that it can be cleared
         update_pivot_active_flag();

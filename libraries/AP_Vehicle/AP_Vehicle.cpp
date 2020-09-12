@@ -38,6 +38,13 @@ const AP_Param::GroupInfo AP_Vehicle::var_info[] = {
     AP_SUBGROUPINFO(msp, "MSP",  5, AP_Vehicle, AP_MSP),
 #endif
 
+    // @Param: MAV_TEXT_OPT
+    // @DisplayName: MAVLink statustext options
+    // @Description: bitmask of additional message to send to GCS
+    // @Bitmask: 0:None,1:AuxSwitch
+    // @User: Advanced
+    AP_GROUPINFO("MAV_TEXT_OPT", 6, AP_Vehicle, _mav_text_option, (int16_t)GCS::MESSAGE_OPTION::AuxSwitch),
+
     AP_GROUPEND
 };
 

@@ -207,7 +207,7 @@ public:
     virtual void update_dynamic_notch() {};
 
     // MAV_SEVERITY level for filtering whether to send statustext to GCS
-    AP_Int8 _mav_severity;
+    AP_Int16 _mav_text_option;
 
 protected:
 

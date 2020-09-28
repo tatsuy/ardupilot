@@ -279,6 +279,7 @@ bool Copter::set_mode(Mode::Number mode, ModeReason reason)
     control_mode_reason = reason;
     logger.Write_Mode((uint8_t)control_mode, reason);
     gcs().send_message(MSG_HEARTBEAT);
+    gcs().send_text(MAV_SEVERITY_DEBUG, GCS::MESSAGE_OPTION::Mode, "%s reason=%u", flightmode->name(), static_cast<unsigned>(reason));
 
 #if HAL_ADSB_ENABLED
     adsb.set_is_auto_mode((mode == Mode::Number::AUTO) || (mode == Mode::Number::RTL) || (mode == Mode::Number::GUIDED));

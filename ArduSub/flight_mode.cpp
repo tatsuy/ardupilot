@@ -76,6 +76,7 @@ bool Sub::set_mode(control_mode_t mode, ModeReason reason)
         control_mode_reason = reason;
         logger.Write_Mode(control_mode, control_mode_reason);
         gcs().send_message(MSG_HEARTBEAT);
+        gcs().send_text(MAV_SEVERITY_DEBUG, GCS::MESSAGE_OPTION::Mode, "%d reason=%u", control_mode, static_cast<unsigned>(control_mode_reason));
 
         // update notify object
         notify_flight_mode(control_mode);

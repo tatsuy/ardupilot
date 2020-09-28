@@ -589,16 +589,16 @@ bool RC_Channel::read_aux()
         const char *temp =  nullptr;
         switch (new_position) {
         case AuxSwitchPos::HIGH:
-            temp = "HIGH";           
+            temp = "HIGH";
             break;
         case AuxSwitchPos::MIDDLE:
             temp = "MIDDLE";
             break;
         case AuxSwitchPos::LOW:
-            temp = "LOW";          
+            temp = "LOW";
             break;
         }
-        gcs().send_text(MAV_SEVERITY_INFO, "%s %s", aux_string, temp);
+        gcs().send_text(MAV_SEVERITY_INFO, GCS::MESSAGE_OPTION::AuxSwitch, "%s %s", aux_string, temp);
     }
 #endif
 

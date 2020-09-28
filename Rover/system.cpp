@@ -214,6 +214,7 @@ bool Rover::set_mode(Mode &new_mode, ModeReason reason)
     }
 
     control_mode = &new_mode;
+    gcs().send_text(MAV_SEVERITY_DEBUG, GCS::MESSAGE_OPTION::Mode, "%s reason=%u", control_mode->name4(), static_cast<unsigned>(reason));
 
     // pilot requested flight mode change during a fence breach indicates pilot is attempting to manually recover
     // this flight mode change could be automatic (i.e. fence, battery, GPS or GCS failsafe)

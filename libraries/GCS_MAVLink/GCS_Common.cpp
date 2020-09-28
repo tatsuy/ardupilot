@@ -1828,7 +1828,7 @@ void GCS_MAVLINK::send_ahrs()
 /*
     send a statustext text string to specific MAVLink bitmask
 */
-void GCS::send_textv(MAV_SEVERITY severity, const char *fmt, va_list arg_list, uint8_t dest_bitmask)
+void GCS::send_textv(MAV_SEVERITY severity, const char *fmt, va_list arg_list, uint8_t dest_bitmask, MESSAGE_OPTION opt_bitmask)
 {
     char first_piece_of_text[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1]{};
 
@@ -1841,7 +1841,7 @@ void GCS::send_textv(MAV_SEVERITY severity, const char *fmt, va_list arg_list, u
 
         // not send if severity level lower than MAV_TEXT_SEV
         const AP_Vehicle *vehicle = AP::vehicle();
-        if (severity > constrain_int16(vehicle->_mav_severity, -1, MAV_SEVERITY_ENUM_END-1)) {
+        if ((uint16_t)opt_bitmask && !((uint16_t)opt_bitmask & constrain_int16(vehicle->_mav_text_option, 0, INT16_MAX))) {
             break;
         }
 

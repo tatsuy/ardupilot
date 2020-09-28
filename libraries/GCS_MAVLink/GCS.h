@@ -884,9 +884,18 @@ public:
 
     void send_to_active_channels(uint32_t msgid, const char *pkt);
 
+    enum class MESSAGE_OPTION : uint16_t {
+        General = 0,
+        Verbose = 1 << 0,
+        AuxSwitch = 1 << 1,
+        Scripting = 1 << 2,
+        Mode = 1 << 3,
+    };
+
     void send_text(MAV_SEVERITY severity, const char *fmt, ...) FMT_PRINTF(3, 4);
-    void send_textv(MAV_SEVERITY severity, const char *fmt, va_list arg_list);
-    virtual void send_textv(MAV_SEVERITY severity, const char *fmt, va_list arg_list, uint8_t mask);
+    void send_text(MAV_SEVERITY severity, MESSAGE_OPTION opt_bitmask, const char *fmt, ...) FMT_PRINTF(4, 5);
+    void send_textv(MAV_SEVERITY severity, const char *fmt, va_list arg_list, MESSAGE_OPTION opt_bitmask =  MESSAGE_OPTION::General);
+    virtual void send_textv(MAV_SEVERITY severity, const char *fmt, va_list arg_list, uint8_t mask, MESSAGE_OPTION opt_bitmask =  MESSAGE_OPTION::General);
     uint8_t statustext_send_channel_mask() const;
 
     virtual GCS_MAVLINK *chan(const uint8_t ofs) = 0;

@@ -277,6 +277,7 @@ bool Plane::set_mode(Mode &new_mode, const ModeReason reason)
     logger.Write_Mode(control_mode->mode_number(), control_mode_reason);
     notify_mode(*control_mode);
     gcs().send_message(MSG_HEARTBEAT);
+    gcs().send_text(MAV_SEVERITY_DEBUG, GCS::MESSAGE_OPTION::Mode, "%s reason=%u", control_mode->name4(), static_cast<unsigned>(control_mode_reason));
 
     return true;
 }

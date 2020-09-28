@@ -191,6 +191,7 @@ void Tracker::set_mode(Mode &newmode, const ModeReason reason)
 	// log mode change
 	logger.Write_Mode((uint8_t)mode->number(), reason);
     gcs().send_message(MSG_HEARTBEAT);
+    gcs().send_text(MAV_SEVERITY_DEBUG, GCS::MESSAGE_OPTION::Mode, "%d reason=%u", (uint8_t)mode->number(), static_cast<unsigned>(reason));
 
     nav_status.bearing = ahrs.yaw_sensor * 0.01f;
 }

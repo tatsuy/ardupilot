@@ -1634,7 +1634,7 @@ void AP_InertialSensor::wait_for_sample(void)
                           (unsigned)(now2-_next_sample_usec),
                           (unsigned)wait_usec);
         }
-        _next_sample_usec += _sample_period_usec;
+        _next_sample_usec += _sample_period_usec - 1;
     } else if (now - _next_sample_usec < _sample_period_usec/8) {
         // we've overshot, but only by a small amount, keep on
         // schedule with no delay

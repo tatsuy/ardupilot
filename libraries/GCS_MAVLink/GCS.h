@@ -605,6 +605,7 @@ private:
         Bitmask<MSG_LAST> ap_message_ids;
         uint16_t interval_ms;
         uint16_t last_sent_ms; // from AP_HAL::millis16()
+        uint64_t last_sent_us;
     };
     deferred_message_bucket_t deferred_message_bucket[10];
     static const uint8_t no_bucket_to_send = -1;
@@ -613,7 +614,9 @@ private:
     Bitmask<MSG_LAST> bucket_message_ids_to_send;
 
     ap_message next_deferred_bucket_message_to_send(uint16_t now16_ms);
+    ap_message next_deferred_bucket_message_to_send(uint64_t now64_us);
     void find_next_bucket_to_send(uint16_t now16_ms);
+    void find_next_bucket_to_send(uint64_t now64_us);
     void remove_message_from_bucket(int8_t bucket, ap_message id);
 
     // bitmask of IDs the code has spontaneously decided it wants to

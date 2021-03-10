@@ -973,6 +973,51 @@ void GCS_MAVLINK::find_next_bucket_to_send(uint16_t now16_ms)
 #endif
 }
 
+// typical runtime on fmuv3: 5 microseconds for 3 buckets
+void GCS_MAVLINK::find_next_bucket_to_send(uint64_t now64_us)
+{
+#if GCS_DEBUG_SEND_MESSAGE_TIMINGS
+    void *data = hal.scheduler->disable_interrupts_save();
+    uint32_t start_us = AP_HAL::micros();
+#endif
+
+    // all done sending this bucket... find another bucket...
+    sending_bucket_id = no_bucket_to_send;
+    uint64_t us_before_send_next_bucket_to_send = UINT64_MAX;
+    for (uint8_t i=0; i<ARRAY_SIZE(deferred_message_bucket); i++) {
+        if (deferred_message_bucket[i].ap_message_ids.count() == 0) {
+            // no entries
+            continue;
+        }
+        const uint64_t interval = get_reschedule_interval_ms(deferred_message_bucket[i]) * 1000;
+        const uint64_t us_since_last_sent = now64_us - deferred_message_bucket[i].last_sent_us;
+        uint64_t us_before_send_this_bucket;
+        if (us_since_last_sent > interval) {
+            // should already have sent this bucket!
+            us_before_send_this_bucket = 0;
+        } else {
+            us_before_send_this_bucket = interval - us_since_last_sent;
+        }
+        if (us_before_send_this_bucket < us_before_send_next_bucket_to_send) {
+            sending_bucket_id = i;
+            us_before_send_next_bucket_to_send = us_before_send_this_bucket;
+        }
+    }
+    if (sending_bucket_id != no_bucket_to_send) {
+        bucket_message_ids_to_send = deferred_message_bucket[sending_bucket_id].ap_message_ids;
+    } else {
+        bucket_message_ids_to_send.clearall();
+    }
+
+#if GCS_DEBUG_SEND_MESSAGE_TIMINGS
+    uint32_t delta_us = AP_HAL::micros() - start_us;
+    hal.scheduler->restore_interrupts(data);
+    if (delta_us > try_send_message_stats.fnbts_maxtime) {
+        try_send_message_stats.fnbts_maxtime = delta_us;
+    }
+#endif
+}
+
 ap_message GCS_MAVLINK::next_deferred_bucket_message_to_send(uint16_t now16_ms)
 {
     if (sending_bucket_id == no_bucket_to_send) {
@@ -993,6 +1038,31 @@ ap_message GCS_MAVLINK::next_deferred_bucket_message_to_send(uint16_t now16_ms)
         AP_HAL::panic("next_deferred_bucket_message_to_send called on empty bucket");
 #endif
         find_next_bucket_to_send(now16_ms);
+        return no_message_to_send;
+    }
+    return (ap_message)next;
+}
+
+ap_message GCS_MAVLINK::next_deferred_bucket_message_to_send(uint64_t now64_us)
+{
+    if (sending_bucket_id == no_bucket_to_send) {
+        // could happen if all streamrates are zero?
+        return no_message_to_send;
+    }
+
+    const uint64_t us_since_last_sent = now64_us - deferred_message_bucket[sending_bucket_id].last_sent_us;
+    if (us_since_last_sent < get_reschedule_interval_ms(deferred_message_bucket[sending_bucket_id]) * 1000) {
+        // not time to send this bucket
+        return no_message_to_send;
+    }
+
+    const int16_t next = bucket_message_ids_to_send.first_set();
+    if (next == -1) {
+        // should not happen
+#if CONFIG_HAL_BOARD == HAL_BOARD_SITL
+        AP_HAL::panic("next_deferred_bucket_message_to_send called on empty bucket");
+#endif
+        find_next_bucket_to_send(now64_us);
         return no_message_to_send;
     }
     return (ap_message)next;
@@ -1104,6 +1174,7 @@ void GCS_MAVLINK::update_send()
 
     const uint32_t start = AP_HAL::millis();
     const uint16_t start16 = start & 0xFFFF;
+    const uint64_t start64 = AP_HAL::micros64();
     while (AP_HAL::millis() - start < 5) { // spend a max of 5ms sending messages.  This should never trigger - out_of_time() should become true
         if (gcs().out_of_time()) {
 #if GCS_DEBUG_SEND_MESSAGE_TIMINGS
@@ -1164,7 +1235,7 @@ void GCS_MAVLINK::update_send()
             continue;
         }
 
-        ap_message next = next_deferred_bucket_message_to_send(start16);
+        ap_message next = next_deferred_bucket_message_to_send(start64);
         if (next != no_message_to_send) {
             if (!do_try_send_message(next)) {
                 break;
@@ -1176,11 +1247,13 @@ void GCS_MAVLINK::update_send()
                 // user support questions:
                 const uint16_t interval_ms = get_reschedule_interval_ms(deferred_message_bucket[sending_bucket_id]);
                 deferred_message_bucket[sending_bucket_id].last_sent_ms += interval_ms;
+                deferred_message_bucket[sending_bucket_id].last_sent_us += interval_ms * 1000;
                 // but we do not want to try to catch up too much:
                 if (uint16_t(start16 - deferred_message_bucket[sending_bucket_id].last_sent_ms) > interval_ms) {
                     deferred_message_bucket[sending_bucket_id].last_sent_ms = start16;
+                    deferred_message_bucket[sending_bucket_id].last_sent_us = start64;
                 }
-                find_next_bucket_to_send(start16);
+                find_next_bucket_to_send(start64);
             }
 #if GCS_DEBUG_SEND_MESSAGE_TIMINGS
                 const uint32_t stop = AP_HAL::micros();
@@ -1220,12 +1293,13 @@ void GCS_MAVLINK::remove_message_from_bucket(int8_t bucket, ap_message id)
         // bucket empty.  Free it:
         deferred_message_bucket[bucket].interval_ms = 0;
         deferred_message_bucket[bucket].last_sent_ms = 0;
+        deferred_message_bucket[bucket].last_sent_us = 0;
     }
 
     if (bucket == sending_bucket_id) {
         bucket_message_ids_to_send.clear(id);
         if (bucket_message_ids_to_send.count() == 0) {
-            find_next_bucket_to_send(AP_HAL::millis16());
+            find_next_bucket_to_send(AP_HAL::micros64());
         } else {
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
             if (deferred_message_bucket[bucket].interval_ms == 0 &&
@@ -1334,6 +1408,7 @@ bool GCS_MAVLINK::set_ap_message_interval(enum ap_message id, uint16_t interval_
         // allocate a bucket for this interval
         deferred_message_bucket[empty_bucket_id].interval_ms = interval_ms;
         deferred_message_bucket[empty_bucket_id].last_sent_ms = AP_HAL::millis16();
+        deferred_message_bucket[empty_bucket_id].last_sent_us = AP_HAL::micros64();
         closest_bucket = empty_bucket_id;
     }
 

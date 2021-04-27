@@ -469,6 +469,34 @@ AP_GPS_SBF::process_message(void)
         }
         break;
     }
+    case AttEuler:
+    {
+        const msg5938 &temp = sbf_msg.data.msg5938u;
+
+        check_new_itow(temp.TOW, sbf_msg.length);
+        state.gps_yaw = wrap_360(temp.Heading);
+        state.gps_yaw_configured = true;
+        if (temp.Mode > 0) {
+            state.have_gps_yaw = true;
+        } else {
+            state.have_gps_yaw = false;
+        }
+        break;
+    }
+    case AttCovEuler:
+    {
+        const msg5939 &temp = sbf_msg.data.msg5939u;
+
+        check_new_itow(temp.TOW, sbf_msg.length);
+        float max_variance_squared = temp.Cov_HeadHead;
+        if (is_positive(max_variance_squared)) {
+            state.have_gps_yaw_accuracy = true;
+            state.gps_yaw_accuracy = sqrt(max_variance_squared);
+        } else {
+            state.have_gps_yaw_accuracy = false;
+        }
+        break;
+    }
     case BaseVectorGeod:
     {
 #pragma GCC diagnostic push

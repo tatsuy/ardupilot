@@ -469,6 +469,28 @@ AP_GPS_SBF::process_message(void)
         }
         break;
     }
+    case AttEuler:
+    {
+        const msg5938 &temp = sbf_msg.data.msg5938u;
+
+        check_new_itow(temp.TOW, sbf_msg.length);
+        state.gps_yaw = temp.Heading;
+        state.have_gps_yaw = true;
+        gcs().send_named_float("SBFmode", temp.Mode);
+        gcs().send_named_float("SBFyaw", temp.Heading);
+        gcs().send_named_float("SBFyawdot", temp.HeadingDot);
+        break;
+    }
+    case AttCovEuler:
+    {
+        const msg5939 &temp = sbf_msg.data.msg5939u;
+
+        check_new_itow(temp.TOW, sbf_msg.length);
+        gcs().send_named_float("SBFcovhead", temp.Cov_HeadHead);
+        gcs().send_named_float("SBFcovpit", temp.Cov_HeadPitch);
+        gcs().send_named_float("SBFcovroll", temp.Cov_HeadRoll);
+        break;
+    }
     case BaseVectorGeod:
     {
 #pragma GCC diagnostic push

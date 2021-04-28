@@ -23,6 +23,7 @@
 #include <GCS_MAVLink/GCS.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <AP_Logger/AP_Logger.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -110,7 +111,7 @@ AP_GPS_SBF::read(void)
                                 }
                                 break;
                             case Config_State::SSO:
-                                if (asprintf(&config_string, "sso,Stream%d,COM%d,PVTGeodetic+DOP+ReceiverStatus+VelCovGeodetic+BaseVectorGeod,msec100\n",
+                                if (asprintf(&config_string, "sso,Stream%d,COM%d,PVTGeodetic+DOP+ReceiverStatus+VelCovGeodetic+BaseVectorGeod+AttEuler+AttCovEuler,msec100\n",
                                              (int)GPS_SBF_STREAM_NUMBER,
                                              (int)gps._com_port[state.instance]) == -1) {
                                     config_string = nullptr;
@@ -481,6 +482,17 @@ AP_GPS_SBF::process_message(void)
         } else {
             state.have_gps_yaw = false;
         }
+        AP::logger().Write("SBAE", "TimeUS,NrSV,Error,Mode,Head,Pitch,Roll,PitDot,RollDot,HeadDot", "QBBHffffff",
+                                               AP_HAL::micros64(),
+                                               temp.NrSV,
+                                               temp.Error,
+                                               temp.Mode,
+                                               temp.Heading,
+                                               temp.Pitch,
+                                               temp.Roll,
+                                               temp.PitchDot,
+                                               temp.RollDot,
+                                               temp.HeadingDot);
         break;
     }
     case AttCovEuler:
@@ -495,6 +507,15 @@ AP_GPS_SBF::process_message(void)
         } else {
             state.have_gps_yaw_accuracy = false;
         }
+        AP::logger().Write("SBAC", "TimeUS,Error,CovHead,CovPitch,CovRoll,CovHP,CovHR,CovPR", "QBffffff",
+                                               AP_HAL::micros64(),
+                                               temp.Error,
+                                               temp.Cov_HeadHead,
+                                               temp.Cov_PitchPitch,
+                                               temp.Cov_RollRoll,
+                                               temp.Cov_HeadPitch,
+                                               temp.Cov_HeadRoll,
+                                               temp.Cov_PitchRoll);
         break;
     }
     case BaseVectorGeod:

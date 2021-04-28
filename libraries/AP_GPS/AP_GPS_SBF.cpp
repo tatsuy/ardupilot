@@ -23,6 +23,7 @@
 #include <GCS_MAVLink/GCS.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <AP_Logger/AP_Logger.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -479,6 +480,17 @@ AP_GPS_SBF::process_message(void)
         gcs().send_named_float("SBFmode", temp.Mode);
         gcs().send_named_float("SBFyaw", temp.Heading);
         gcs().send_named_float("SBFyawdot", temp.HeadingDot);
+        AP::logger().Write("SBAE", "TimeUS,NrSV,Error,Mode,Head,Pitch,Roll,PitDot,RollDot,HeadDot", "QBBHffffff",
+                                               AP_HAL::micros64(),
+                                               temp.NrSV,
+                                               temp.Error,
+                                               temp.Mode,
+                                               temp.Heading,
+                                               temp.Pitch,
+                                               temp.Roll,
+                                               temp.PitchDot,
+                                               temp.RollDot,
+                                               temp.HeadingDot);
         break;
     }
     case AttCovEuler:
@@ -489,6 +501,15 @@ AP_GPS_SBF::process_message(void)
         gcs().send_named_float("SBFcovhead", temp.Cov_HeadHead);
         gcs().send_named_float("SBFcovpit", temp.Cov_HeadPitch);
         gcs().send_named_float("SBFcovroll", temp.Cov_HeadRoll);
+        AP::logger().Write("SBAC", "TimeUS,Error,CovHead,CovPitch,CovRoll,CovHP,CovHR,CovPR", "QBffffff",
+                                               AP_HAL::micros64(),
+                                               temp.Error,
+                                               temp.Cov_HeadHead,
+                                               temp.Cov_PitchPitch,
+                                               temp.Cov_RollRoll,
+                                               temp.Cov_HeadPitch,
+                                               temp.Cov_HeadRoll,
+                                               temp.Cov_PitchRoll);
         break;
     }
     case BaseVectorGeod:

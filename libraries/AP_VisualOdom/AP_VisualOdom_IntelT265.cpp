@@ -183,8 +183,13 @@ bool AP_VisualOdom_IntelT265::align_sensor_to_vehicle(const Vector3f &position, 
     Vector3f pos_new = position;
     rotate_and_correct_position(pos_new);
 
+    Vector3f pos_offset = _frontend.get_pos_offset();
+    Matrix3f pos_rotation;
+    pos_rotation.from_euler(0.0f, 0.0f, AP::ahrs().get_yaw());
+    pos_offset = pos_rotation * pos_offset;
+
     // update position correction to remove change due to rotation
-    _pos_correction += (pos_orig - pos_new);
+    _pos_correction += (pos_orig - pos_new + pos_offset);
 
     return true;
 }
@@ -203,13 +208,21 @@ bool AP_VisualOdom_IntelT265::align_position_to_ahrs(const Vector3f &sensor_pos,
     Vector3f pos_orig = sensor_pos;
     rotate_and_correct_position(pos_orig);
 
+    Vector3f pos_offset = _frontend.get_pos_offset();
+    Matrix3f pos_rotation;
+    pos_rotation.from_euler(0.0f, 0.0f, AP::ahrs().get_yaw());
+    pos_offset = pos_rotation * pos_offset;
+    gcs().send_named_float("PosOx", pos_offset.x);
+    gcs().send_named_float("PosOy", pos_offset.y);
+    gcs().send_named_float("PosOz", pos_offset.z);
+
     // update position correction
     if (align_xy) {
-        _pos_correction.x += (ahrs_pos_ned.x - pos_orig.x);
-        _pos_correction.y += (ahrs_pos_ned.y - pos_orig.y);
+        _pos_correction.x += (ahrs_pos_ned.x - pos_orig.x + pos_offset.x);
+        _pos_correction.y += (ahrs_pos_ned.y - pos_orig.y + pos_offset.y);
     }
     if (align_z) {
-        _pos_correction.z += (ahrs_pos_ned.z - pos_orig.z);
+        _pos_correction.z += (ahrs_pos_ned.z - pos_orig.z + pos_offset.z);
     }
 
     return true;

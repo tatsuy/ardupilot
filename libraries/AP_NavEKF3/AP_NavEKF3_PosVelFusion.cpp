@@ -362,10 +362,14 @@ void NavEKF3_core::CorrectExtNavForSensorOffset(ext_nav_elements &ext_nav_data)
     if (posOffsetBody.is_zero()) {
         return;
     }
+    // GCS_SEND_TEXT(MAV_SEVERITY_CRITICAL, "pOB: %f %f %f", posOffsetBody.x, posOffsetBody.y, posOffsetBody.z);
     Vector3f posOffsetEarth = prevTnb.mul_transpose(posOffsetBody);
+    // GCS_SEND_TEXT(MAV_SEVERITY_CRITICAL, "pOE: %f %f %f", posOffsetEarth.x, posOffsetEarth.y, posOffsetEarth.z);
+    // GCS_SEND_TEXT(MAV_SEVERITY_CRITICAL, "endb: %f %f %f", ext_nav_data.pos.x, ext_nav_data.pos.y, ext_nav_data.pos.z);
     ext_nav_data.pos.x -= posOffsetEarth.x;
     ext_nav_data.pos.y -= posOffsetEarth.y;
     ext_nav_data.pos.z -= posOffsetEarth.z;
+    // GCS_SEND_TEXT(MAV_SEVERITY_CRITICAL, "enda: %f %f %f", ext_nav_data.pos.x, ext_nav_data.pos.y, ext_nav_data.pos.z);
 #endif
 }
 

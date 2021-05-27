@@ -251,8 +251,10 @@ void NavEKF3_core::setAidingMode()
             // If GPS usage has been prohiited then we use flow aiding provided optical flow data is present
             // GPS aiding is the preferred option unless excluded by the user
             if (readyToUseGPS() || readyToUseRangeBeacon() || readyToUseExtNav()) {
+                GCS_SEND_TEXT(MAV_SEVERITY_INFO, "IMU%u AID_NONE -> AID_ABSOLUTE", (unsigned)imu_index);
                 PV_AidingMode = AID_ABSOLUTE;
             } else if (readyToUseOptFlow() || readyToUseBodyOdm()) {
+                GCS_SEND_TEXT(MAV_SEVERITY_INFO, "IMU%u AID_NONE -> AID_RELATIVE", (unsigned)imu_index);
                 PV_AidingMode = AID_RELATIVE;
             }
             break;
@@ -266,8 +268,10 @@ void NavEKF3_core::setAidingMode()
             // If GPS or range beacons data is not available and flow fusion has timed out, then fall-back to no-aiding
             if (readyToUseGPS() || readyToUseRangeBeacon() || readyToUseExtNav()) {
                 PV_AidingMode = AID_ABSOLUTE;
+                GCS_SEND_TEXT(MAV_SEVERITY_INFO, "IMU%u AID_RELATIVE -> AID_ABSOLUTE", (unsigned)imu_index);
             } else if (flowFusionTimeout && bodyOdmFusionTimeout) {
                 PV_AidingMode = AID_NONE;
+                GCS_SEND_TEXT(MAV_SEVERITY_INFO, "IMU%u AID_RELATIVE -> AID_NONE", (unsigned)imu_index);
             }
             break;
         }
@@ -326,6 +330,7 @@ void NavEKF3_core::setAidingMode()
             if (attAidLossCritical) {
                 // if the loss of attitude data is critical, then put the filter into a constant position mode
                 PV_AidingMode = AID_NONE;
+                GCS_SEND_TEXT(MAV_SEVERITY_INFO, "IMU%u AID_ABSOLUTE -> AID_NONE", (unsigned)imu_index);
                 posTimeout = true;
                 velTimeout = true;
                 rngBcnTimeout = true;
@@ -532,10 +537,6 @@ bool NavEKF3_core::readyToUseRangeBeacon(void) const
 bool NavEKF3_core::readyToUseExtNav(void) const
 {
 #if EK3_FEATURE_EXTERNAL_NAV
-    if (frontend->sources.getPosXYSource() != AP_NavEKF_Source::SourceXY::EXTNAV) {
-        return false;
-    }
-
     return tiltAlignComplete && extNavDataToFuse;
 #else
     return false;

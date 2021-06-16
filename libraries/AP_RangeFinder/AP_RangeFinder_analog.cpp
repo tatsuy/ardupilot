@@ -113,6 +113,11 @@ void AP_RangeFinder_analog::update(void)
         dist_m = 0;
     }
     state.distance_cm = dist_m * 100.0f;
+#if CONFIG_HAL_BOARD == HAL_BOARD_SITL
+    if (params.orientation == ROTATION_PITCH_90) {
+        state.distance_cm = dist_m < 10.0f ? 1000 - (dist_m * 100.0f) : 0.01f;
+    }
+#endif
     state.last_reading_ms = AP_HAL::millis();
 
     // update range_valid state based on distance measured

@@ -145,8 +145,9 @@ IMU Invensense SPI:mpu6000 ROTATION_YAW_180
 BARO BMP280 I2C:0:0x76
 
 # setup for OSD
-define OSD_ENABLED 1
-define HAL_OSD_TYPE_DEFAULT 1
+define OSD_ENABLED 0
+define HAL_OSD_TYPE_DEFAULT 0
+define OSD_PARAM_ENABLED 0
 ROMFS_WILDCARD libraries/AP_OSD/fonts/font0.bin
 
 define STM32_PWM_USE_ADVANCED TRUE
@@ -168,3 +169,37 @@ define HAL_MOUNT_ENABLED 0
 define GENERATOR_ENABLED 0
 define AC_OAPATHPLANNER_ENABLED 0
 define PRECISION_LANDING 0
+
+## adding
+define HAL_WITH_DSP 1
+define HAL_INS_TEMPERATURE_CAL_ENABLE 1
+define RANGEFINDER_MAX_INSTANCES 2
+define BARO_MAX_INSTANCES 1
+define AP_BATT_MONITOR_MAX_INSTANCES 1
+define HAL_COMPASS_MAX_SENSORS 1
+define GPS_MAX_RECEIVERS 1
+define GPS_MAX_INSTANCES 1
+define AUTOTUNE_ENABLED      DISABLED            // disable the auto tune functionality to save 7k of flash
+define CAMERA                DISABLED            // disable camera trigger to save 1k of flash
+define AC_RALLY              DISABLED            // disable rally points library (must also disable terrain which relies on rally)
+define AC_TERRAIN            DISABLED            // disable terrain library
+define PARACHUTE             DISABLED            // disable parachute release to save 1k of flash
+define NAV_GUIDED            DISABLED            // disable external navigation computer ability to control vehicle through MAV_CMD_NAV_GUIDED mission commands
+define OPTFLOW               DISABLED            // disable optical flow sensor to save 5K of flash space
+define BEACON_ENABLED        DISABLED            // disable beacon support
+define WINCH_ENABLED         DISABLED            // disable winch support
+define GRIPPER_ENABLED       DISABLED            // disable gripper support
+define MODE_ACRO_ENABLED     DISABLED            // disable acrobatic mode support
+define MODE_AUTO_ENABLED     DISABLED            // disable auto mode support
+define MODE_BRAKE_ENABLED    DISABLED            // disable brake mode support
+define MODE_CIRCLE_ENABLED   DISABLED            // disable circle mode support
+define MODE_DRIFT_ENABLED    DISABLED            // disable drift mode support
+define MODE_FLIP_ENABLED     DISABLED            // disable flip mode support
+define MODE_FOLLOW_ENABLED   DISABLED            // disable follow mode support#define MODE_LOITER_ENABLED   DISABLED            // disable loiter mode support
+define MODE_POSHOLD_ENABLED  DISABLED            // disable poshold mode support
+define MODE_RTL_ENABLED      DISABLED            // disable rtl mode support
+define MODE_SMARTRTL_ENABLED DISABLED            // disable smartrtl mode support
+define MODE_SPORT_ENABLED    DISABLED            // disable sport mode support
+define MODE_THROW_ENABLED    DISABLED            // disable throw mode support
+define MODE_ZIGZAG_ENABLED   DISABLED            // disable zigzag mode support
+define LANDING_GEAR_ENABLED  DISABLED            // disable landing gear support

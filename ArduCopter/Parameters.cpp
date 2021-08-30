@@ -521,9 +521,11 @@ const AP_Param::Info Copter::var_info[] = {
     // @Path: ../libraries/AP_InertialSensor/AP_InertialSensor.cpp
     GOBJECT(ins,            "INS_", AP_InertialSensor),
 
+#if MODE_AUTO_ENABLED == ENABLED
     // @Group: WPNAV_
     // @Path: ../libraries/AC_WPNav/AC_WPNav.cpp
     GOBJECTPTR(wp_nav, "WPNAV_",       AC_WPNav),
+#endif
 
     // @Group: LOIT_
     // @Path: ../libraries/AC_WPNav/AC_Loiter.cpp

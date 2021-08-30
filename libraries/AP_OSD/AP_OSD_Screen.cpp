@@ -1872,7 +1872,7 @@ void AP_OSD_Screen::draw_climbeff(uint8_t x, uint8_t y)
 void AP_OSD_Screen::draw_btemp(uint8_t x, uint8_t y)
 {
     AP_Baro &barometer = AP::baro();
-    float btmp = barometer.get_temperature(1);
+    float btmp = barometer.get_temperature(0);
     backend->write(x, y, false, "%3d%c", (int)u_scale(TEMPERATURE, btmp), u_icon(TEMPERATURE));
 }
 

@@ -43,6 +43,7 @@ const AP_Param::GroupInfo AP_BattMonitor::var_info[] = {
     // @Path: AP_BattMonitor_Analog.cpp
     AP_SUBGROUPVARPTR(drivers[0], "_", 41, AP_BattMonitor, backend_analog_var_info[0]),
 
+#if AP_BATT_MONITOR_MAX_INSTANCES > 1
     // Monitor 2
 
     // @Group: 2_
@@ -52,7 +53,9 @@ const AP_Param::GroupInfo AP_BattMonitor::var_info[] = {
     // @Group: 2_
     // @Path: AP_BattMonitor_Analog.cpp
     AP_SUBGROUPVARPTR(drivers[1], "2_", 42, AP_BattMonitor, backend_analog_var_info[1]),
+#endif
 
+#if AP_BATT_MONITOR_MAX_INSTANCES > 2
     // Monitor 3
 
     // @Group: 3_
@@ -62,7 +65,9 @@ const AP_Param::GroupInfo AP_BattMonitor::var_info[] = {
     // @Group: 3_
     // @Path: AP_BattMonitor_Analog.cpp
     AP_SUBGROUPVARPTR(drivers[2], "3_", 43, AP_BattMonitor, backend_analog_var_info[2]),
+#endif
 
+#if AP_BATT_MONITOR_MAX_INSTANCES > 3
     // Monitor 4
 
     // @Group: 4_
@@ -72,7 +77,9 @@ const AP_Param::GroupInfo AP_BattMonitor::var_info[] = {
     // @Group: 4_
     // @Path: AP_BattMonitor_Analog.cpp
     AP_SUBGROUPVARPTR(drivers[3], "4_", 44, AP_BattMonitor, backend_analog_var_info[3]),
+#endif
 
+#if AP_BATT_MONITOR_MAX_INSTANCES > 4
     // Monitor 5
 
     // @Group: 5_
@@ -82,7 +89,9 @@ const AP_Param::GroupInfo AP_BattMonitor::var_info[] = {
     // @Group: 5_
     // @Path: AP_BattMonitor_Analog.cpp
     AP_SUBGROUPVARPTR(drivers[4], "5_", 45, AP_BattMonitor, backend_analog_var_info[4]),
+#endif
 
+#if AP_BATT_MONITOR_MAX_INSTANCES > 5
     // Monitor 6
 
     // @Group: 6_
@@ -92,7 +101,9 @@ const AP_Param::GroupInfo AP_BattMonitor::var_info[] = {
     // @Group: 6_
     // @Path: AP_BattMonitor_Analog.cpp
     AP_SUBGROUPVARPTR(drivers[5], "6_", 46, AP_BattMonitor, backend_analog_var_info[5]),
+#endif
 
+#if AP_BATT_MONITOR_MAX_INSTANCES > 6
     // Monitor 7
 
     // @Group: 7_
@@ -102,7 +113,9 @@ const AP_Param::GroupInfo AP_BattMonitor::var_info[] = {
     // @Group: 7_
     // @Path: AP_BattMonitor_Analog.cpp
     AP_SUBGROUPVARPTR(drivers[6], "7_", 47, AP_BattMonitor, backend_analog_var_info[6]),
+#endif
 
+#if AP_BATT_MONITOR_MAX_INSTANCES > 7
     // Monitor 8
 
     // @Group: 8_
@@ -112,7 +125,9 @@ const AP_Param::GroupInfo AP_BattMonitor::var_info[] = {
     // @Group: 8_
     // @Path: AP_BattMonitor_Analog.cpp
     AP_SUBGROUPVARPTR(drivers[7], "8_", 48, AP_BattMonitor, backend_analog_var_info[7]),
+#endif
 
+#if AP_BATT_MONITOR_MAX_INSTANCES > 8
     // Monitor 9
 
     // @Group: 9_
@@ -122,6 +137,7 @@ const AP_Param::GroupInfo AP_BattMonitor::var_info[] = {
     // @Group: 9_
     // @Path: AP_BattMonitor_Analog.cpp
     AP_SUBGROUPVARPTR(drivers[8], "9_", 49, AP_BattMonitor, backend_analog_var_info[8]),
+#endif
 
 #if HAL_BATTMON_SMBUS_ENABLE
     // @Group: _

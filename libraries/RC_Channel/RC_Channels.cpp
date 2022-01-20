@@ -28,6 +28,7 @@ extern const AP_HAL::HAL& hal;
 #include <AP_Logger/AP_Logger.h>
 
 #include "RC_Channel.h"
+#include <AP_RCMapper/AP_RCMapper.h>
 
 /*
   channels group object constructor
@@ -77,6 +78,11 @@ bool RC_Channels::read_input(void)
     has_new_overrides = false;
 
     last_update_ms = AP_HAL::millis();
+
+    // clear RC override by the pilot input if RC_OPTIONS is configured
+    if (has_active_overrides()) {
+        clear_overrides_by_rc();
+    }
 
     bool success = false;
     for (uint8_t i=0; i<NUM_RC_CHANNELS; i++) {
@@ -229,6 +235,21 @@ bool RC_Channels::flight_mode_channel_conflicts_with_rc_option() const
         return false;
     }
     return (RC_Channel::aux_func_t)chan->option.get() != RC_Channel::AUX_FUNC::DO_NOTHING;
+}
+
+// clear overrides by radio input
+void RC_Channels::clear_overrides_by_rc()
+{
+    if ((rc().clear_overrides_by_roll() && channel(AP::rcmap()->roll() - 1)->radio_input_changed()) ||
+        (rc().clear_overrides_by_pitch() && channel(AP::rcmap()->pitch() - 1)->radio_input_changed()) ||
+        (rc().clear_overrides_by_throttle() && channel(AP::rcmap()->throttle() - 1)->radio_input_changed()) ||
+        (rc().clear_overrides_by_yaw() && channel(AP::rcmap()->yaw() - 1)->radio_input_changed())) {
+        set_gcs_overrides_enabled(false);
+        gcs().send_text(MAV_SEVERITY_NOTICE, "Clear overrides by pilot input");
+        if (!rc().find_channel_for_option(RC_Channel::AUX_FUNC::RC_OVERRIDE_ENABLE)) {
+            gcs().send_text(MAV_SEVERITY_INFO, "use RCx_OPTION=46 to re-enable RC overrides");
+        }
+    }
 }
 
 /*

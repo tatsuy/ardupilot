@@ -1313,3 +1313,20 @@ void RC_Channels::convert_options(const RC_Channel::aux_func_t old_option, const
         }
     }
 }
+
+bool RC_Channel::radio_input_changed()
+{
+    if (!rc().ignore_receiver()) {
+        int16_t current_radio_in = hal.rcin->read(ch_in);
+        if (previous_radio_in == -1) {
+            // initialise previous_radio_in
+            previous_radio_in = current_radio_in;
+        } else if (abs(current_radio_in - previous_radio_in) > get_dead_zone()) {
+            // check if rc input value has changed by more than the deadzone
+            previous_radio_in = -1;
+            return true;
+        }
+    }
+
+    return false;
+}

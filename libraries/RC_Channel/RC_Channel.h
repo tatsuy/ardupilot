@@ -274,9 +274,6 @@ public:
     // wrapper function around do_aux_function which allows us to log
     bool run_aux_function(aux_func_t ch_option, AuxSwitchPos pos, AuxFuncTriggerSource source);
 
-    // return true if rc input value has changed by more than the deadzone
-    bool radio_input_changed();
-
 #if !HAL_MINIMIZE_FEATURES
     const char *string_for_aux_function(AUX_FUNC function) const;
 #endif
@@ -333,8 +330,12 @@ private:
 
     // pwm is stored here
     int16_t     radio_in;
-    // previous radio_in, used to ignore small changes
-    int16_t     previous_radio_in = -1;
+    // previous rc in, used to ignore small changes in radio_input_changed()
+    int16_t     prev_rc_in = -1;
+    bool rc_in_changed;
+
+    // return true if rc input value has changed by more than the deadzone
+    bool radio_input_changed(uint16_t rc_in);
 
     // value generated from PWM normalised to configured scale
     int16_t    control_in;
@@ -516,22 +517,6 @@ public:
         return get_singleton() != nullptr && (_options & uint32_t(Option::USE_CRSF_LQ_AS_RSSI)) != 0;
     }
 
-    bool clear_overrides_by_roll(void) const {
-        return _options & uint32_t(Option::CLEAR_OVERRIDES_BY_ROLL);
-    }
-
-    bool clear_overrides_by_pitch(void) const {
-        return _options & uint32_t(Option::CLEAR_OVERRIDES_BY_PITCH);
-    }
-
-    bool clear_overrides_by_throttle(void) const {
-        return _options & uint32_t(Option::CLEAR_OVERRIDES_BY_THROTTLE);
-    }
-
-    bool clear_overrides_by_yaw(void) const {
-        return _options & uint32_t(Option::CLEAR_OVERRIDES_BY_YAW);
-    }
-
     // returns true if overrides should time out.  If true is returned
     // then returned_timeout_ms will contain the timeout in
     // milliseconds, with 0 meaning overrides are disabled.
@@ -581,28 +566,22 @@ public:
     void calibrating(bool b) { gcs_is_calibrating = b; }
     bool calibrating() { return gcs_is_calibrating; }
 
-    // clear overrides by radio input
-    void clear_overrides_by_rc();
-
 protected:
 
     enum class Option {
-        IGNORE_RECEIVER             = (1U << 0), // RC receiver modules
-        IGNORE_OVERRIDES            = (1U << 1), // MAVLink overrides
-        IGNORE_FAILSAFE             = (1U << 2), // ignore RC failsafe bits
-        FPORT_PAD                   = (1U << 3), // pad fport telem output
-        LOG_DATA                    = (1U << 4), // log rc input bytes
-        ARMING_CHECK_THROTTLE       = (1U << 5), // run an arming check for neutral throttle
-        ARMING_SKIP_CHECK_RPY       = (1U << 6), // skip the an arming checks for the roll/pitch/yaw channels
-        ALLOW_SWITCH_REV            = (1U << 7), // honor the reversed flag on switches
-        CRSF_CUSTOM_TELEMETRY       = (1U << 8), // use passthrough data for crsf telemetry
-        SUPPRESS_CRSF_MESSAGE       = (1U << 9), // suppress CRSF mode/rate message for ELRS systems
-        MULTI_RECEIVER_SUPPORT      = (1U << 10), // allow multiple receivers
-        USE_CRSF_LQ_AS_RSSI         = (1U << 11), // returns CRSF link quality as RSSI value, instead of RSSI
-        CLEAR_OVERRIDES_BY_ROLL     = (1U << 12), // clear MAVLink overrides if the pilot inputs roll
-        CLEAR_OVERRIDES_BY_PITCH    = (1U << 13), // clear MAVLink overrides if the pilot inputs pitch
-        CLEAR_OVERRIDES_BY_THROTTLE = (1U << 14), // clear MAVLink overrides if the pilot inputs throttle
-        CLEAR_OVERRIDES_BY_YAW      = (1U << 15), // clear MAVLink overrides if the pilot inputs yaw
+        IGNORE_RECEIVER         = (1U << 0), // RC receiver modules
+        IGNORE_OVERRIDES        = (1U << 1), // MAVLink overrides
+        IGNORE_FAILSAFE         = (1U << 2), // ignore RC failsafe bits
+        FPORT_PAD               = (1U << 3), // pad fport telem output
+        LOG_DATA                = (1U << 4), // log rc input bytes
+        ARMING_CHECK_THROTTLE   = (1U << 5), // run an arming check for neutral throttle
+        ARMING_SKIP_CHECK_RPY   = (1U << 6), // skip the an arming checks for the roll/pitch/yaw channels
+        ALLOW_SWITCH_REV        = (1U << 7), // honor the reversed flag on switches
+        CRSF_CUSTOM_TELEMETRY   = (1U << 8), // use passthrough data for crsf telemetry
+        SUPPRESS_CRSF_MESSAGE   = (1U << 9), // suppress CRSF mode/rate message for ELRS systems
+        MULTI_RECEIVER_SUPPORT  = (1U << 10), // allow multiple receivers
+        USE_CRSF_LQ_AS_RSSI     = (1U << 11), // returns CRSF link quality as RSSI value, instead of RSSI
+        CLEAR_OVERRIDES_BY_RC   = (1U << 12), // clear MAVLink overrides if the pilot inputs roll/pitch/throttle/yaw
     };
 
     void new_override_received() {
@@ -629,6 +608,13 @@ private:
 
     // true if GCS is performing a RC calibration
     bool gcs_is_calibrating;
+
+    // clear overrides by radio input
+    void clear_overrides_by_rc_in();
+
+    bool clear_overrides_by_rc(void) const {
+        return _options & uint32_t(Option::CLEAR_OVERRIDES_BY_RC);
+    }
 };
 
 RC_Channels &rc();

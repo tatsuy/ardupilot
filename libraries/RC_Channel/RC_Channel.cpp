@@ -138,10 +138,13 @@ bool RC_Channel::get_reverse(void) const
 // read input from hal.rcin or overrides
 bool RC_Channel::update(void)
 {
+    const uint16_t rc_in = hal.rcin->read(ch_in);
+    rc_in_changed = radio_input_changed(rc_in);
+
     if (has_override() && !rc().ignore_overrides()) {
         radio_in = override_value;
     } else if (rc().has_had_rc_receiver() && !rc().ignore_receiver()) {
-        radio_in = hal.rcin->read(ch_in);
+        radio_in = rc_in;
     } else {
         return false;
     }
@@ -1314,16 +1317,15 @@ void RC_Channels::convert_options(const RC_Channel::aux_func_t old_option, const
     }
 }
 
-bool RC_Channel::radio_input_changed()
+bool RC_Channel::radio_input_changed(uint16_t rc_in)
 {
-    if (!rc().ignore_receiver()) {
-        int16_t current_radio_in = hal.rcin->read(ch_in);
-        if (previous_radio_in == -1) {
-            // initialise previous_radio_in
-            previous_radio_in = current_radio_in;
-        } else if (abs(current_radio_in - previous_radio_in) > get_dead_zone()) {
+    if (rc().has_had_rc_receiver() && !rc().ignore_receiver()) {
+        if (prev_rc_in == -1) {
+            // initialise prev_rc_in
+            prev_rc_in = rc_in;
+        } else if (abs(rc_in - prev_rc_in) > get_dead_zone()) {
             // check if rc input value has changed by more than the deadzone
-            previous_radio_in = -1;
+            prev_rc_in = -1;
             return true;
         }
     }

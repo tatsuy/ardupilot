@@ -356,6 +356,14 @@ const AP_Param::GroupInfo QuadPlane::var_info[] = {
     // 60 is used above for VELZ_MAX_DN
     // 61 is used above for TS_ANGLE_VTOL
 
+    // @Param: GUIDED_TIMEOUT
+    // @DisplayName: Guided mode timeout
+    // @Description: Guided mode timeout after which vehicle will stop or return to level if no updates are received from caller.  Only applicable during velocity, acceleration or angle control
+    // @Units: s
+    // @Range: 0.1 5
+    // @User: Advanced
+    AP_GROUPINFO("GUIDED_TIMEOUT", 62, QuadPlane, guided_timeout, 3.0),
+
     AP_GROUPEND
 };
 
@@ -2992,6 +3000,33 @@ void QuadPlane::vtol_position_controller(void)
     case QPOS_LAND_COMPLETE:
         // nothing to do
         break;
+    case QPOS_VELOCITY: {
+        Vector2f zero;
+        uint32_t tnow = millis();
+        if (tnow - poscontrol.update_time_ms > MAX(guided_timeout, 0.1) * 1000) {
+            pos_control->input_vel_accel_xy(zero, zero);
+        } else {
+            pos_control->input_vel_accel_xy(poscontrol.target_vel_cms.xy(), zero);
+        }
+
+        const Vector2f diff_wp = plane.current_loc.get_distance_NE(loc);
+        const float scaled_wp_speed = get_scaled_wp_speed(degrees(diff_wp.angle()));
+
+        pos_control->set_max_speed_accel_xy(scaled_wp_speed*100, wp_nav->get_wp_acceleration());
+        pos_control->set_correction_speed_accel_xy(scaled_wp_speed*100, wp_nav->get_wp_acceleration());
+
+        run_xy_controller();
+
+        // nav roll and pitch are controlled by position controller
+        plane.nav_roll_cd = pos_control->get_roll_cd();
+        plane.nav_pitch_cd = pos_control->get_pitch_cd();
+
+        // call attitude controller
+        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(plane.nav_roll_cd,
+                                                                      plane.nav_pitch_cd,
+                                                                      get_pilot_input_yaw_rate_cds() + get_weathervane_yaw_rate_cds());
+        break;
+    }
     }
 
     // now height control
@@ -3077,6 +3112,16 @@ void QuadPlane::vtol_position_controller(void)
 
     case QPOS_LAND_COMPLETE:
         break;
+    case QPOS_VELOCITY: {
+        uint32_t tnow = millis();
+        if (tnow - poscontrol.update_time_ms > MAX(guided_timeout, 0.1) * 1000) {
+            set_climb_rate_cms(0, false);
+        } else {
+            float zero = 0;
+            pos_control->input_vel_accel_z(poscontrol.target_vel_cms.z, zero, 0);
+        }
+        break;
+    }
     }
     
     run_z_controller();

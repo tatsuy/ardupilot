@@ -372,6 +372,7 @@ private:
 
     // control if a VTOL GUIDED will be used
     AP_Int8 guided_mode;
+    AP_Float guided_timeout;
 
     // control ESC throttle calibration
     AP_Int8 esc_calibration;
@@ -472,7 +473,8 @@ private:
         QPOS_POSITION2,
         QPOS_LAND_DESCEND,
         QPOS_LAND_FINAL,
-        QPOS_LAND_COMPLETE
+        QPOS_LAND_COMPLETE,
+        QPOS_VELOCITY,
     };
     class PosControlState {
     public:
@@ -493,6 +495,7 @@ private:
         bool reached_wp_speed;
         uint32_t last_run_ms;
         float pos1_start_speed;
+        uint32_t update_time_ms;
     private:
         uint32_t last_state_change_ms;
         enum position_control_state state;

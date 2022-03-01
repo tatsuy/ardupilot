@@ -1073,6 +1073,11 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
 
 void GCS_MAVLINK_Plane::handleMessage(const mavlink_message_t &msg)
 {
+    constexpr uint32_t MAVLINK_SET_POS_TYPE_MASK_VEL_IGNORE =
+        POSITION_TARGET_TYPEMASK_VX_IGNORE |
+        POSITION_TARGET_TYPEMASK_VY_IGNORE |
+        POSITION_TARGET_TYPEMASK_VZ_IGNORE;
+
     switch (msg.msgid) {
 
     case MAVLINK_MSG_ID_MANUAL_CONTROL:
@@ -1212,14 +1217,25 @@ void GCS_MAVLINK_Plane::handleMessage(const mavlink_message_t &msg)
         }
 
         // only local moves for now
-        if (packet.coordinate_frame != MAV_FRAME_LOCAL_OFFSET_NED) {
+        if (packet.coordinate_frame != MAV_FRAME_LOCAL_NED) {
             break;
         }
 
-        // just do altitude for now
-        plane.next_WP_loc.alt += -packet.z*100.0;
-        gcs().send_text(MAV_SEVERITY_INFO, "Change alt to %.1f",
-                        (double)((plane.next_WP_loc.alt - plane.home.alt)*0.01));
+        QuadPlane &quadplane = plane.quadplane;
+        bool vel_ignore      = packet.type_mask & MAVLINK_SET_POS_TYPE_MASK_VEL_IGNORE;
+
+        // prepare velocity
+        Vector3f vel_vector;
+        if (!vel_ignore) {
+            // convert to cm
+            vel_vector = Vector3f(packet.vx * 100.0f, packet.vy * 100.0f, -packet.vz * 100.0f);
+        }
+
+        if (!vel_ignore) {
+            quadplane.poscontrol.set_state(QuadPlane::QPOS_VELOCITY);
+            quadplane.poscontrol.target_vel_cms = vel_vector;
+            quadplane.poscontrol.update_time_ms = millis();
+        }
         
         break;
     }

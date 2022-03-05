@@ -3027,6 +3027,22 @@ void QuadPlane::vtol_position_controller(void)
                                                                       get_pilot_input_yaw_rate_cds() + get_weathervane_yaw_rate_cds());
         break;
     }
+    case QPOS_YAW: {
+        Vector2f zero;
+        pos_control->input_vel_accel_xy(zero, zero);
+        run_xy_controller();
+
+        // nav roll and pitch are controlled by position controller
+        plane.nav_roll_cd = pos_control->get_roll_cd();
+        plane.nav_pitch_cd = pos_control->get_pitch_cd();
+
+        // call attitude controller
+        attitude_control->input_euler_angle_roll_pitch_yaw(plane.nav_roll_cd,
+                                                           plane.nav_pitch_cd,
+                                                           poscontrol.target_yaw_cds,
+                                                           true);
+        break;
+    }
     }
 
     // now height control
@@ -3111,6 +3127,7 @@ void QuadPlane::vtol_position_controller(void)
     }
 
     case QPOS_LAND_COMPLETE:
+    case QPOS_YAW:
         break;
     case QPOS_VELOCITY: {
         uint32_t tnow = millis();

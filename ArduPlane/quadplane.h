@@ -475,6 +475,7 @@ private:
         QPOS_LAND_FINAL,
         QPOS_LAND_COMPLETE,
         QPOS_VELOCITY,
+        QPOS_YAW,
     };
     class PosControlState {
     public:
@@ -487,6 +488,7 @@ private:
         }
         Vector3p target_cm;
         Vector3f target_vel_cms;
+        float target_yaw_cds;
         bool slow_descent:1;
         bool pilot_correction_active;
         bool pilot_correction_done;

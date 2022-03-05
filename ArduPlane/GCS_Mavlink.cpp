@@ -1066,6 +1066,35 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
         }
         return MAV_RESULT_ACCEPTED;
 
+    case MAV_CMD_CONDITION_YAW: {
+        // exit if vehicle is not in Guided mode
+        if (plane.control_mode != &plane.mode_guided) {
+            return MAV_RESULT_DENIED;
+        }
+        if (packet.param1 < 0.0f || packet.param1 >= 360.0f) {
+            return MAV_RESULT_DENIED;
+        }
+        plane.quadplane.poscontrol.set_state(QuadPlane::QPOS_YAW);
+        // param1, yaw in degrees
+        // param2, not used (yaw speed deg/s)
+        // param3, direction -1 ccw, 1 cw
+        // param4, relative offset 1, absolute angle 0
+        float _target_yaw_cds = packet.param1 * 100.0f;
+        if (!is_zero(packet.param4)) {
+            float _yaw_angle_cd = plane.quadplane.attitude_control->get_att_target_euler_cd().z;
+            _target_yaw_cds = wrap_180_cd(_target_yaw_cds * (packet.param3 >= 0 ? 1.0 : -1.0) + _yaw_angle_cd);
+        } else {
+            // absolute angle
+            if ( packet.param3 < 0 && is_positive(_target_yaw_cds) ) {
+                _target_yaw_cds -= 36000.0;
+            } else if ( packet.param3 > 0 && is_negative(_target_yaw_cds) ) {
+                _target_yaw_cds += 36000.0;
+            }
+        }
+        plane.quadplane.poscontrol.target_yaw_cds = _target_yaw_cds;
+        return MAV_RESULT_ACCEPTED;
+    }
+
     default:
         return GCS_MAVLINK::handle_command_long_packet(packet);
     }

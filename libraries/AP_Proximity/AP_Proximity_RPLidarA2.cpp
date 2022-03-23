@@ -45,7 +45,7 @@ reboot
 #include <ctype.h>
 #include <stdio.h>
 
-#define RP_DEBUG_LEVEL 0
+#define RP_DEBUG_LEVEL 1
 
 #if RP_DEBUG_LEVEL
   #include <GCS_MAVLink/GCS.h>
@@ -91,7 +91,7 @@ void AP_Proximity_RPLidarA2::update(void)
     const uint32_t now = AP_HAL::millis();
     if (now - _last_distance_received_ms > COMM_ACTIVITY_TIMEOUT_MS) {
         set_status(AP_Proximity::Status::NoData);
-        Debug(1, "LIDAR NO DATA");
+        Debug(2, "LIDAR NO DATA");
         if (now - _last_reset_ms > 10000) {
             Debug(1, "LIDAR timeout");
             send_command(RPLIDAR_CMD_RESET);
@@ -152,6 +152,14 @@ void AP_Proximity_RPLidarA2::get_readings()
     Debug(2, "             CURRENT STATE: %u ", (unsigned)_state);
     const uint32_t nbytes = _uart->available();
     if (nbytes == 0) {
+        //Any input in resetted state come from scan before reset, must discard
+        if (_state == State::RESET && (AP_HAL::millis() - _last_reset_ms) > RESET_S1_WAIT_MS ) {
+            Debug(1,"scan start");
+            _uart->discard_input();
+            send_command(RPLIDAR_CMD_SCAN);
+            _last_reset_ms =  AP_HAL::millis();
+            _state = State::AWAITING_RESPONSE;
+        }
         return;
     }
     const uint32_t bytes_to_read = MIN(nbytes, sizeof(_payload)-_byte_count);
@@ -162,6 +170,7 @@ void AP_Proximity_RPLidarA2::get_readings()
     }
     const uint32_t bytes_read = _uart->read(&_payload[_byte_count], bytes_to_read);
     if (bytes_read == 0) {
+        Debug(1,"bytes_read == 0");
         // this is bad; we were told there were bytes available
         INTERNAL_ERROR(AP_InternalError::error_t::flow_of_control);
         reset();
@@ -174,6 +183,7 @@ void AP_Proximity_RPLidarA2::get_readings()
         if (_byte_count >= previous_loop_byte_count) {
             // this is a serious error, we should always consume some
             // bytes.  Avoid looping forever.
+            Debug(1,"_byte_count >= previous_loop_byte_count");
             INTERNAL_ERROR(AP_InternalError::error_t::flow_of_control);
             _uart = nullptr;
             return;
@@ -185,9 +195,11 @@ void AP_Proximity_RPLidarA2::get_readings()
             // looking for 0x52 at start of buffer; the 62 following
             // bytes are "information"
             if (!make_first_byte_in_payload('R')) { // that's 'R' as in RPiLidar
+                Debug(3,"!make_first_byte_in_payload('R')");
                 return;
             }
             if (_byte_count < 63) {
+                Debug(1,"_byte_count < 63");
                 return;
             }
         #if RP_DEBUG_LEVEL
@@ -202,30 +214,21 @@ void AP_Proximity_RPLidarA2::get_readings()
             // reset data ... so now we'll just drop that stuff on
             // the floor.
             consume_bytes(63);
-            //wait 2.1s before sending scan command
-            if (frontend.get_type(state.instance) == AP_Proximity::Type::RPLidarS1) {
-                 //Any input in resetted state come from scan before reset, must discard
-                 uart->discard_input();
-                 if ((AP_HAL::millis() - _last_reset_ms) > RESET_S1_WAIT_MS ) { 
-                      send_command(RPLIDAR_CMD_SCAN);
-                      _state = State::AWAITING_RESPONSE;
-                      continue;
-                 }
-            }else{
-                send_command(RPLIDAR_CMD_SCAN);
-                _state = State::AWAITING_RESPONSE;
-                continue;
-            }
+            send_command(RPLIDAR_CMD_SCAN);
+            _state = State::AWAITING_RESPONSE;
+            continue;
         }
         case State::AWAITING_RESPONSE:
             if (_payload[0] != RPLIDAR_PREAMBLE) {
                 // this is a protocol error.  Reset.
+                Debug(1,"_payload[0] != RPLIDAR_PREAMBLE");
                 reset();
                 return;
             }
 
             // descriptor packet has 7 byte in total
             if (_byte_count < sizeof(_descriptor)) {
+                Debug(1,"_byte_count < sizeof(_descriptor)");
                 return;
             }
             // identify the payload data after the descriptor
@@ -290,7 +293,7 @@ void AP_Proximity_RPLidarA2::parse_response_data()
     const float angle_deg = wrap_360(_payload.sensor_scan.angle_q6/64.0f * angle_sign + frontend.get_yaw_correction(state.instance));
     const float distance_m = (_payload.sensor_scan.distance_q2/4000.0f);
 #if RP_DEBUG_LEVEL >= 2
-    const float quality = _payload.sensor_scan.quality;
+    const uint8_t quality = _payload.sensor_scan.quality;
     Debug(2, "                                       D%02.2f A%03.1f Q%02d", distance_m, angle_deg, quality);
 #endif
     _last_distance_received_ms = AP_HAL::millis();

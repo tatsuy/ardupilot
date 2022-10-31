@@ -3041,6 +3041,7 @@ void GCS_MAVLINK::handle_named_value(const mavlink_message_t &msg) const
                   p.value,
                   msg.sysid,
                   msg.compid);
+    gcs().send_named_float(s, p.value);
 }
 
 void GCS_MAVLINK::handle_system_time_message(const mavlink_message_t &msg)

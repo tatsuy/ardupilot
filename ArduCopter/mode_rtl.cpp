@@ -62,6 +62,7 @@ ModeRTL::RTLAltType ModeRTL::get_alt_type() const
 void ModeRTL::run(bool disarm_on_land)
 {
     if (!motors->armed()) {
+        make_safe_ground_handling();
         return;
     }
 

@@ -43,3 +43,17 @@ void GCS_Blimp::update_vehicle_sensor_status_flags(void)
         control_sensors_health |= MAV_SYS_STATUS_SENSOR_RC_RECEIVER;
     }
 }
+
+MAV_LANDED_STATE GCS_Blimp::landed_state() const
+{
+    if (blimp.ap.land_complete) {
+        return MAV_LANDED_STATE_ON_GROUND;
+    }
+    if (blimp.flightmode->is_landing()) {
+        return MAV_LANDED_STATE_LANDING;
+    }
+    // if (blimp.flightmode->is_taking_off()) {
+    //     return MAV_LANDED_STATE_TAKEOFF;
+    // }
+    return MAV_LANDED_STATE_IN_AIR;
+}

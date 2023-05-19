@@ -149,3 +149,17 @@ void GCS_Copter::update_vehicle_sensor_status_flags(void)
         control_sensors_health |= MAV_SYS_STATUS_SENSOR_PROPULSION;
     }
 }
+
+MAV_LANDED_STATE GCS_Copter::landed_state() const
+{
+    if (copter.ap.land_complete) {
+        return MAV_LANDED_STATE_ON_GROUND;
+    }
+    if (copter.flightmode->is_landing()) {
+        return MAV_LANDED_STATE_LANDING;
+    }
+    if (copter.flightmode->is_taking_off()) {
+        return MAV_LANDED_STATE_TAKEOFF;
+    }
+    return MAV_LANDED_STATE_IN_AIR;
+}

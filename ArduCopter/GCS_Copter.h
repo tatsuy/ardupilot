@@ -28,6 +28,9 @@ public:
     bool simple_input_active() const override;
     bool supersimple_input_active() const override;
 
+    virtual MAV_VTOL_STATE vtol_state() const override { return MAV_VTOL_STATE_MC; };
+    virtual MAV_LANDED_STATE landed_state() const override;
+
 protected:
 
     uint8_t sysid_this_mav() const override;

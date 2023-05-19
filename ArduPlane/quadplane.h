@@ -183,6 +183,9 @@ public:
     // Should we allow stick mixing from the pilot
     bool allow_stick_mixing() const;
 
+    // transition logic
+    Transition *transition = nullptr;
+
 private:
     AP_AHRS &ahrs;
 
@@ -406,9 +409,6 @@ private:
 
     // when did we last run the attitude controller?
     uint32_t last_att_control_ms;
-
-    // transition logic
-    Transition *transition = nullptr;
 
     // true when waiting for pilot throttle
     bool throttle_wait:1;

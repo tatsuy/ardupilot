@@ -1411,27 +1411,3 @@ uint8_t GCS_MAVLINK_Plane::high_latency_wind_direction() const
     return wrap_360(degrees(atan2f(-wind.y, -wind.x))) / 2;
 }
 #endif // HAL_HIGH_LATENCY2_ENABLED
-
-MAV_VTOL_STATE GCS_MAVLINK_Plane::vtol_state() const
-{
-#if !HAL_QUADPLANE_ENABLED
-    return MAV_VTOL_STATE_UNDEFINED;
-#else
-    if (!plane.quadplane.available()) {
-        return MAV_VTOL_STATE_UNDEFINED;
-    }
-
-    return plane.quadplane.transition->get_mav_vtol_state();
-#endif
-};
-
-MAV_LANDED_STATE GCS_MAVLINK_Plane::landed_state() const
-{
-    if (plane.is_flying()) {
-        // note that Q-modes almost always consider themselves as flying
-        return MAV_LANDED_STATE_IN_AIR;
-    }
-
-    return MAV_LANDED_STATE_ON_GROUND;
-}
-

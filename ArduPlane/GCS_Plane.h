@@ -22,6 +22,8 @@ protected:
     void update_vehicle_sensor_status_flags(void) override;
     uint32_t custom_mode() const override;
     MAV_TYPE frame_type() const override;
+    MAV_VTOL_STATE vtol_state() const override;
+    MAV_LANDED_STATE landed_state() const override;
 
     GCS_MAVLINK_Plane *new_gcs_mavlink_backend(GCS_MAVLINK_Parameters &params,
                                                AP_HAL::UARTDriver &uart) override {

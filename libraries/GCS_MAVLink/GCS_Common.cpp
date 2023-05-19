@@ -5254,7 +5254,7 @@ void GCS_MAVLINK::send_sys_status()
 
 void GCS_MAVLINK::send_extended_sys_state() const
 {
-    mavlink_msg_extended_sys_state_send(chan, vtol_state(), landed_state());
+    mavlink_msg_extended_sys_state_send(chan, gcs().vtol_state(), gcs().landed_state());
 }
 
 void GCS_MAVLINK::send_attitude() const

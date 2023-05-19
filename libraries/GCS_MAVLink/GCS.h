@@ -491,9 +491,6 @@ protected:
     MAV_STATE system_status() const;
     virtual MAV_STATE vehicle_system_status() const = 0;
 
-    virtual MAV_VTOL_STATE vtol_state() const { return MAV_VTOL_STATE_UNDEFINED; }
-    virtual MAV_LANDED_STATE landed_state() const { return MAV_LANDED_STATE_UNDEFINED; }
-
     // return a MAVLink parameter type given a AP_Param type
     static MAV_PARAM_TYPE mav_param_type(enum ap_var_type t);
 
@@ -1102,6 +1099,8 @@ public:
     virtual uint32_t custom_mode() const = 0;
     virtual MAV_TYPE frame_type() const = 0;
     virtual const char* frame_string() const { return nullptr; }
+    virtual MAV_VTOL_STATE vtol_state() const { return MAV_VTOL_STATE_UNDEFINED; }
+    virtual MAV_LANDED_STATE landed_state() const { return MAV_LANDED_STATE_UNDEFINED; }
 
     struct statustext_t {
         mavlink_statustext_t    msg;

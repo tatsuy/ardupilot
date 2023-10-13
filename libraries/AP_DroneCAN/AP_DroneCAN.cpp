@@ -691,6 +691,9 @@ void AP_DroneCAN::SRV_send_esc(void)
             } else {
                 esc_msg.cmd.data[k] = static_cast<unsigned>(0);
             }
+            char name[10];  // Assuming names will be "canescXX", hence size is 10
+            snprintf(name, sizeof(name), "canesc%d", k + 1);
+            gcs().send_named_float(name, esc_msg.cmd.data[k]);
 
             k++;
         }

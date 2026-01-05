@@ -565,12 +565,32 @@ void AP_Proximity_RPLidarA2::parse_response_express(const uint8_t *buf)
 
 void AP_Proximity_RPLidarA2::handle_express_data()
 {
+    const uint32_t start_us = AP_HAL::micros();
+    static constexpr uint32_t MAX_US = 1000;
+
+    auto time_exceeded = [&]() -> bool {
+        return (AP_HAL::micros() - start_us) > MAX_US;
+    };
+
     auto ensure_space = [&](uint16_t need) {
         if (_express_stream_len + need <= EXPRESS_STREAM_BUFFER_SIZE) {
             return;
         }
-        const uint16_t keep = EXPRESS_STREAM_BUFFER_SIZE / 2;
-        memmove(_express_stream, _express_stream + (_express_stream_len - keep), keep);
+
+        uint16_t keep = EXPRESS_STREAM_BUFFER_SIZE / 2;
+        keep = MIN(keep, _express_stream_len);
+
+        if (keep == 0) {
+            _express_stream_len = 0;
+            _sync_error = 0;
+            Debug(1, "EXPRESS stream overflow, dropping all data");
+            return;
+        }
+
+        const uint16_t src = _express_stream_len - keep;
+        if (src != 0) {
+            memmove(_express_stream, _express_stream + src, keep);
+        }
         _express_stream_len = keep;
         _sync_error = 0;
         Debug(1, "EXPRESS stream overflow, dropping old data");
@@ -587,9 +607,18 @@ void AP_Proximity_RPLidarA2::handle_express_data()
             _express_stream_len += to_copy;
         }
         _byte_count = 0;
+
+        if (time_exceeded()) {
+            // time guard: return quickly, process what we have next cycle
+            return;
+        }
     }
 
     while (_uart->available() && bytes_read_total < EXPRESS_MAX_BYTES_CONSUME) {
+        if (time_exceeded()) {
+            break;
+        }
+
         const uint16_t remaining = uint16_t(EXPRESS_MAX_BYTES_CONSUME - bytes_read_total);
         uint16_t space = EXPRESS_STREAM_BUFFER_SIZE - _express_stream_len;
         if (space == 0) {
@@ -618,8 +647,15 @@ void AP_Proximity_RPLidarA2::handle_express_data()
     uint16_t idx = 0;
 
     while (_express_stream_len >= idx + 2) {
+        if (time_exceeded()) {
+            break;
+        }
+
         // search for a header candidate (upper nibbles 0xA / 0x5)
         while (idx + 1 < _express_stream_len) {
+            if (time_exceeded()) {
+                break;
+            }
             const uint8_t b0 = _express_stream[idx];
             const uint8_t b1 = _express_stream[idx + 1];
             if ((b0 >> 4) == EXPRESS_SYNC1 && (b1 >> 4) == EXPRESS_SYNC2) {
@@ -629,12 +665,14 @@ void AP_Proximity_RPLidarA2::handle_express_data()
             idx++;
         }
 
+        if (time_exceeded()) {
+            break;
+        }
+
         if (idx + 1 >= _express_stream_len) {
             // no header candidate found, drop all accumulated data
             if (_express_stream_len > 0) {
                 Debug(1, "EXPRESS: no header candidate, dropping %u bytes", unsigned(_express_stream_len));
-            }
-            if (_express_stream_len > 0) {
                 _express_stream[0] = _express_stream[_express_stream_len - 1];
                 _express_stream_len = 1;
             } else {

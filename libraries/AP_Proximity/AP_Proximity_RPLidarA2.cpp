@@ -238,6 +238,11 @@ bool AP_Proximity_RPLidarA2::make_first_byte_in_payload(uint8_t desired_byte)
 
 void AP_Proximity_RPLidarA2::get_readings()
 {
+    if (_state == State::AWAITING_EXPRESS_DATA) {
+        handle_express_data();
+        return;
+    }
+
     Debug(2, "             CURRENT STATE: %u ", (unsigned)_state);
     const uint32_t nbytes = _uart->available();
     if (nbytes == 0) {
@@ -361,7 +366,7 @@ void AP_Proximity_RPLidarA2::get_readings()
             break;
 
         case State::AWAITING_EXPRESS_DATA:
-            handle_express_data();
+            // handled at top of get_readings()
             break;
         }
     }
@@ -597,22 +602,6 @@ void AP_Proximity_RPLidarA2::handle_express_data()
     };
 
     uint16_t bytes_read_total = 0;
-
-    if (_byte_count > 0) {
-        ensure_space(_byte_count);
-        const uint16_t space = EXPRESS_STREAM_BUFFER_SIZE - _express_stream_len;
-        const uint16_t to_copy = MIN(space, _byte_count);
-        if (to_copy > 0) {
-            memcpy(_express_stream + _express_stream_len, (const uint8_t *)&_payload[0], to_copy);
-            _express_stream_len += to_copy;
-        }
-        _byte_count = 0;
-
-        if (time_exceeded()) {
-            // time guard: return quickly, process what we have next cycle
-            return;
-        }
-    }
 
     while (_uart->available() && bytes_read_total < EXPRESS_MAX_BYTES_CONSUME) {
         if (time_exceeded()) {

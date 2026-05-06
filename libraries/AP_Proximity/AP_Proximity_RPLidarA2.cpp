@@ -518,14 +518,14 @@ void AP_Proximity_RPLidarA2::parse_response_express(const uint8_t *buf)
     const float start_angle_deg_raw = start_angle_q6 / 64.0f; // Q6 -> degrees
 
     const float angle_sign = (params.orientation == 1) ? -1.0f : 1.0f;
-    const float angle_deg = wrap_360(start_angle_deg_raw * angle_sign + params.yaw_correction);
 
     // cabins: 40 cabins * 2-byte distance (mm) starting at buf[4]
     const uint8_t *cab = buf + 4;
     static constexpr int NUM_CABINS = 40;
+    // 40 cabins span 20 deg per block (typical S2 Dense @ 10 Hz)
+    static constexpr float DENSE_CABIN_ANGLE_STEP_DEG = 0.5f;
 
-    bool  have_distance = false;
-    float min_distance_m = 0.0f;
+    _last_distance_received_ms = AP_HAL::millis();
 
     for (int i = 0; i < NUM_CABINS; i++) {
         const uint16_t dist_mm = (uint16_t)cab[0] | ((uint16_t)cab[1] << 8);
@@ -533,45 +533,40 @@ void AP_Proximity_RPLidarA2::parse_response_express(const uint8_t *buf)
         if (dist_mm == 0) {
             continue;
         }
-        const float d_m = dist_mm * 0.001f;
+        const float distance_m = dist_mm * 0.001f;
+        const float cab_angle_raw = start_angle_deg_raw + i * DENSE_CABIN_ANGLE_STEP_DEG;
+        const float angle_deg = wrap_360(cab_angle_raw * angle_sign + params.yaw_correction);
 
-        if (!have_distance || d_m < min_distance_m) {
-            min_distance_m = d_m;
-            have_distance = true;
-        }
-    }
-
-    _last_distance_received_ms = AP_HAL::millis();
-
-    if (!have_distance || ignore_reading(angle_deg, min_distance_m)) {
-        return;
-    }
-
-    const AP_Proximity_Boundary_3D::Face face = frontend.boundary.get_face(angle_deg);
-
-    if (face != _last_face) {
-        // distance is for a new face, the previous one can be updated now
-        if (_last_distance_valid) {
-            frontend.boundary.set_face_attributes(_last_face, _last_angle_deg, _last_distance_m, state.instance);
-        } else {
-            // reset distance from last face
-            frontend.boundary.reset_face(face, state.instance);
+        if (ignore_reading(angle_deg, distance_m)) {
+            continue;
         }
 
-        // initialize the new face
-        _last_face = face;
-        _last_distance_valid = false;
-    }
+        const AP_Proximity_Boundary_3D::Face face = frontend.boundary.get_face(angle_deg);
 
-    if (min_distance_m > distance_min_m()) {
-        // update shortest distance
-        if (!_last_distance_valid || (min_distance_m < _last_distance_m)) {
-            _last_distance_m = min_distance_m;
-            _last_distance_valid = true;
-            _last_angle_deg = angle_deg;
+        if (face != _last_face) {
+            // distance is for a new face, the previous one can be updated now
+            if (_last_distance_valid) {
+                frontend.boundary.set_face_attributes(_last_face, _last_angle_deg, _last_distance_m, state.instance);
+            } else {
+                // reset distance from last face
+                frontend.boundary.reset_face(face, state.instance);
+            }
+
+            // initialize the new face
+            _last_face = face;
+            _last_distance_valid = false;
         }
-        // update OA database
-        database_push(_last_angle_deg, _last_distance_m);
+
+        if (distance_m > distance_min_m()) {
+            // update shortest distance
+            if (!_last_distance_valid || (distance_m < _last_distance_m)) {
+                _last_distance_m = distance_m;
+                _last_distance_valid = true;
+                _last_angle_deg = angle_deg;
+            }
+            // update OA database
+            database_push(_last_angle_deg, _last_distance_m);
+        }
     }
 }
 

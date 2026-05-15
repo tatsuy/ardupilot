@@ -506,19 +506,30 @@ void AP_Proximity_RPLidarA2::parse_response_express(const uint8_t *buf)
         return;
     }
 
+    _last_distance_received_ms = AP_HAL::millis();
+
     // start_angle_q6: 16-bit, Q6 format at bytes [2..3]
     const uint16_t start_angle_q6 = (uint16_t)buf[2] | ((uint16_t)buf[3] << 8);
     const float start_angle_deg_raw = start_angle_q6 / 64.0f; // Q6 -> degrees
 
     const float angle_sign = (params.orientation == 1) ? -1.0f : 1.0f;
-    const float angle_deg = wrap_360(start_angle_deg_raw * angle_sign + params.yaw_correction);
 
     // cabins: 40 cabins * 2-byte distance (mm) starting at buf[4]
     const uint8_t *cab = buf + 4;
     static constexpr int NUM_CABINS = 40;
+    // S2 Dense Express default: 32000 samples/s at 10Hz = 0.1125 deg/cabin
+    static constexpr float DENSE_CABIN_ANGLE_STEP_DEG = 0.1125f;
 
-    bool  have_distance = false;
+    // Hybrid: in the main loop only track the shortest cabin distance and its
+    // index, deferring the per-cabin angle computation and ignore_reading()
+    // until after the loop. This keeps the common path close to the old
+    // single-angle/single-push cost while still allowing per-cabin accuracy
+    // for the selected min cabin.
+    const float dist_min_m_local = distance_min();
+    const uint8_t *cab_start = cab;
+    bool have_min = false;
     float min_distance_m = 0.0f;
+    int min_i = 0;
 
     for (int i = 0; i < NUM_CABINS; i++) {
         const uint16_t dist_mm = (uint16_t)cab[0] | ((uint16_t)cab[1] << 8);
@@ -526,21 +537,60 @@ void AP_Proximity_RPLidarA2::parse_response_express(const uint8_t *buf)
         if (dist_mm == 0) {
             continue;
         }
-        const float d_m = dist_mm * 0.001f;
-
-        if (!have_distance || d_m < min_distance_m) {
-            min_distance_m = d_m;
-            have_distance = true;
+        const float distance_m = dist_mm * 0.001f;
+        if (distance_m <= dist_min_m_local) {
+            continue;
+        }
+        if (!have_min || distance_m < min_distance_m) {
+            have_min = true;
+            min_distance_m = distance_m;
+            min_i = i;
         }
     }
 
-    _last_distance_received_ms = AP_HAL::millis();
-
-    if (!have_distance || ignore_reading(angle_deg, min_distance_m)) {
+    if (!have_min) {
         return;
     }
 
-    const AP_Proximity_Boundary_3D::Face face = frontend.boundary.get_face(angle_deg);
+    // compute the true angle of the selected min cabin (once)
+    const float min_cab_angle_raw = start_angle_deg_raw + min_i * DENSE_CABIN_ANGLE_STEP_DEG;
+    float min_angle_deg = wrap_360(min_cab_angle_raw * angle_sign + params.yaw_correction);
+
+    if (ignore_reading(min_angle_deg, min_distance_m)) {
+        // fallback: the selected min cabin landed inside an ignore zone.
+        // Rescan the same block with per-cabin ignore filtering to find the
+        // shortest non-ignored cabin.
+        have_min = false;
+        cab = cab_start;
+
+        for (int i = 0; i < NUM_CABINS; i++) {
+            const uint16_t dist_mm = (uint16_t)cab[0] | ((uint16_t)cab[1] << 8);
+            cab += 2;
+            if (dist_mm == 0) {
+                continue;
+            }
+            const float distance_m = dist_mm * 0.001f;
+            if (distance_m <= dist_min_m_local) {
+                continue;
+            }
+            const float cab_angle_raw = start_angle_deg_raw + i * DENSE_CABIN_ANGLE_STEP_DEG;
+            const float angle_deg = wrap_360(cab_angle_raw * angle_sign + params.yaw_correction);
+            if (ignore_reading(angle_deg, distance_m)) {
+                continue;
+            }
+            if (!have_min || distance_m < min_distance_m) {
+                have_min = true;
+                min_distance_m = distance_m;
+                min_angle_deg = angle_deg;
+            }
+        }
+
+        if (!have_min) {
+            return;
+        }
+    }
+
+    const AP_Proximity_Boundary_3D::Face face = frontend.boundary.get_face(min_angle_deg);
 
     if (face != _last_face) {
         // distance is for a new face, the previous one can be updated now
@@ -556,16 +606,14 @@ void AP_Proximity_RPLidarA2::parse_response_express(const uint8_t *buf)
         _last_distance_valid = false;
     }
 
-    if (min_distance_m > distance_min()) {
-        // update shortest distance
-        if (!_last_distance_valid || (min_distance_m < _last_distance_m)) {
-            _last_distance_m = min_distance_m;
-            _last_distance_valid = true;
-            _last_angle_deg = angle_deg;
-        }
-        // update OA database
-        database_push(_last_angle_deg, _last_distance_m);
+    // update shortest distance for this face
+    if (!_last_distance_valid || (min_distance_m < _last_distance_m)) {
+        _last_distance_m = min_distance_m;
+        _last_distance_valid = true;
+        _last_angle_deg = min_angle_deg;
     }
+    // update OA database (at most once per block)
+    database_push(_last_angle_deg, _last_distance_m);
 }
 
 void AP_Proximity_RPLidarA2::handle_express_data()

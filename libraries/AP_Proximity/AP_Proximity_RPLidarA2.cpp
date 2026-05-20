@@ -63,8 +63,10 @@
 #define RPLIDAR_CMD_GET_DEVICE_INFO    0x50
 #define RPLIDAR_CMD_GET_DEVICE_HEALTH  0x52
 
+#if AP_PROXIMITY_RPLIDAR_EXPRESSSCAN_ENABLED
 // Commands with payload and have response
 #define RPLIDAR_CMD_EXPRESS_SCAN       0x82
+#endif
 
 extern const AP_HAL::HAL& hal;
 
@@ -154,6 +156,7 @@ void AP_Proximity_RPLidarA2::send_scan_mode_request()
     Debug(1, "Sent scan mode request");
 }
 
+#if AP_PROXIMITY_RPLIDAR_EXPRESSSCAN_ENABLED
 // send EXPRESS_SCAN request for Dense mode
 void AP_Proximity_RPLidarA2::send_express_scan_request()
 {
@@ -180,6 +183,7 @@ void AP_Proximity_RPLidarA2::send_express_scan_request()
     _uart->write(tx_buffer, sizeof(tx_buffer));
     Debug(1, "Sent EXPRESS (Dense) scan request");
 }
+#endif // AP_PROXIMITY_RPLIDAR_EXPRESSSCAN_ENABLED
 
 // send request for sensor health
 void AP_Proximity_RPLidarA2::send_request_for_health()                                    //not called yet
@@ -215,8 +219,10 @@ void AP_Proximity_RPLidarA2::reset()
     _state = State::RESET;
     _byte_count = 0;
     _sync_error = 0;
+#if AP_PROXIMITY_RPLIDAR_EXPRESSSCAN_ENABLED
     _use_dense_express = false;
     _express_stream_len = 0;
+#endif
 }
 
 bool AP_Proximity_RPLidarA2::make_first_byte_in_payload(uint8_t desired_byte)
@@ -242,11 +248,13 @@ void AP_Proximity_RPLidarA2::get_readings()
 {
     Debug(2, "             CURRENT STATE: %u ", (unsigned)_state);
 
+#if AP_PROXIMITY_RPLIDAR_EXPRESSSCAN_ENABLED
     // Express mode reads directly into _express_stream, bypassing _payload
     if (_state == State::AWAITING_EXPRESS_DATA) {
         handle_express_data();
         return;
     }
+#endif
 
     const uint32_t nbytes = _uart->available();
     if (nbytes == 0) {
@@ -325,9 +333,11 @@ void AP_Proximity_RPLidarA2::get_readings()
             static const _descriptor DEVICE_INFO_DESCRIPTOR[] {
                 { RPLIDAR_PREAMBLE, 0x5A, 0x14, 0x00, 0x00, 0x00, 0x04 }
             };
+#if AP_PROXIMITY_RPLIDAR_EXPRESSSCAN_ENABLED
             static const _descriptor EXPRESS_DATA_DESCRIPTOR[] {
                 { RPLIDAR_PREAMBLE, 0x5A, 0x54, 0x00, 0x00, 0x40, 0x85 }
             };
+#endif
             Debug(2,"LIDAR descriptor found");
             if (memcmp((void*)&_payload[0], SCAN_DATA_DESCRIPTOR, sizeof(_descriptor)) == 0) {
                 _state = State::AWAITING_SCAN_DATA;
@@ -335,6 +345,7 @@ void AP_Proximity_RPLidarA2::get_readings()
                 _state = State::AWAITING_DEVICE_INFO;
             } else if (memcmp((void*)&_payload[0], HEALTH_DESCRIPTOR, sizeof(_descriptor)) == 0) {
                 _state = State::AWAITING_HEALTH;
+#if AP_PROXIMITY_RPLIDAR_EXPRESSSCAN_ENABLED
             } else if (_use_dense_express && memcmp((void*)&_payload[0], EXPRESS_DATA_DESCRIPTOR, sizeof(_descriptor)) == 0) {
                 _state = State::AWAITING_EXPRESS_DATA;
                 _express_stream_len = 0;
@@ -346,6 +357,7 @@ void AP_Proximity_RPLidarA2::get_readings()
                 }
                 _byte_count = 0;
                 break;
+#endif
             } else {
                 // unknown descriptor.  Ignore it.
             }
@@ -376,8 +388,10 @@ void AP_Proximity_RPLidarA2::get_readings()
             consume_bytes(sizeof(_payload.sensor_health));
             break;
 
+#if AP_PROXIMITY_RPLIDAR_EXPRESSSCAN_ENABLED
         case State::AWAITING_EXPRESS_DATA:
             break;  // handled above, before _payload read
+#endif
         }
     }
 }
@@ -416,6 +430,7 @@ void AP_Proximity_RPLidarA2::parse_response_device_info()
     }
     GCS_SEND_TEXT(MAV_SEVERITY_INFO, "RPLidar %s hw=%u fw=%u.%u", device_type, _payload.device_info.hardware, _payload.device_info.firmware_minor, _payload.device_info.firmware_major);
 
+#if AP_PROXIMITY_RPLIDAR_EXPRESSSCAN_ENABLED
     // enable Dense EXPRESS path
     _use_dense_express = (model == Model::S2);
     if (_use_dense_express) {
@@ -424,6 +439,13 @@ void AP_Proximity_RPLidarA2::parse_response_device_info()
     } else {
         send_scan_mode_request();
     }
+#else
+    if (model == Model::S2) {
+        GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "RPLidar S2 ExpressScan disabled");
+        return;
+    }
+    send_scan_mode_request();
+#endif
     _state = State::AWAITING_RESPONSE;
 }
 
@@ -494,6 +516,7 @@ void AP_Proximity_RPLidarA2::parse_response_health()
     Debug(1, "LIDAR Healthy");
 }
 
+#if AP_PROXIMITY_RPLIDAR_EXPRESSSCAN_ENABLED
 // verify Dense capsulated (Express) block checksum
 bool AP_Proximity_RPLidarA2::verify_cabin_checksum(const uint8_t *buf, size_t len)
 {
@@ -623,50 +646,52 @@ void AP_Proximity_RPLidarA2::parse_response_express(const uint8_t *buf)
     database_push(_last_angle_deg, _last_distance_m);
 }
 
+bool AP_Proximity_RPLidarA2::express_time_exceeded(uint32_t start_us) const
+{
+    static constexpr uint32_t MAX_US = 1000;
+    return (AP_HAL::micros() - start_us) > MAX_US;
+}
+
+void AP_Proximity_RPLidarA2::ensure_express_stream_space(uint16_t need)
+{
+    if (_express_stream_len + need <= EXPRESS_STREAM_BUFFER_SIZE) {
+        return;
+    }
+
+    uint16_t keep = EXPRESS_STREAM_BUFFER_SIZE / 2;
+    keep = MIN(keep, _express_stream_len);
+
+    if (keep == 0) {
+        _express_stream_len = 0;
+        _sync_error = 0;
+        Debug(1, "EXPRESS stream overflow, dropping all data");
+        return;
+    }
+
+    const uint16_t src = _express_stream_len - keep;
+    if (src != 0) {
+        memmove(_express_stream, _express_stream + src, keep);
+    }
+    _express_stream_len = keep;
+    _sync_error = 0;
+    Debug(1, "EXPRESS stream overflow, dropping old data");
+}
+
 void AP_Proximity_RPLidarA2::handle_express_data()
 {
     const uint32_t start_us = AP_HAL::micros();
-    static constexpr uint32_t MAX_US = 1000;
-
-    auto time_exceeded = [&]() -> bool {
-        return (AP_HAL::micros() - start_us) > MAX_US;
-    };
-
-    auto ensure_space = [&](uint16_t need) {
-        if (_express_stream_len + need <= EXPRESS_STREAM_BUFFER_SIZE) {
-            return;
-        }
-
-        uint16_t keep = EXPRESS_STREAM_BUFFER_SIZE / 2;
-        keep = MIN(keep, _express_stream_len);
-
-        if (keep == 0) {
-            _express_stream_len = 0;
-            _sync_error = 0;
-            Debug(1, "EXPRESS stream overflow, dropping all data");
-            return;
-        }
-
-        const uint16_t src = _express_stream_len - keep;
-        if (src != 0) {
-            memmove(_express_stream, _express_stream + src, keep);
-        }
-        _express_stream_len = keep;
-        _sync_error = 0;
-        Debug(1, "EXPRESS stream overflow, dropping old data");
-    };
 
     uint16_t bytes_read_total = 0;
 
     while (_uart->available() && bytes_read_total < EXPRESS_MAX_BYTES_CONSUME) {
-        if (time_exceeded()) {
+        if (express_time_exceeded(start_us)) {
             break;
         }
 
         const uint16_t remaining = uint16_t(EXPRESS_MAX_BYTES_CONSUME - bytes_read_total);
         uint16_t space = EXPRESS_STREAM_BUFFER_SIZE - _express_stream_len;
         if (space == 0) {
-            ensure_space(1);
+            ensure_express_stream_space(1);
             space = EXPRESS_STREAM_BUFFER_SIZE - _express_stream_len;
             if (space == 0) {
                 break;
@@ -691,13 +716,13 @@ void AP_Proximity_RPLidarA2::handle_express_data()
     uint16_t idx = 0;
 
     while (_express_stream_len >= idx + 2) {
-        if (time_exceeded()) {
+        if (express_time_exceeded(start_us)) {
             break;
         }
 
         // search for a header candidate (upper nibbles 0xA / 0x5)
         while (idx + 1 < _express_stream_len) {
-            if (time_exceeded()) {
+            if (express_time_exceeded(start_us)) {
                 break;
             }
             const uint8_t b0 = _express_stream[idx];
@@ -709,7 +734,7 @@ void AP_Proximity_RPLidarA2::handle_express_data()
             idx++;
         }
 
-        if (time_exceeded()) {
+        if (express_time_exceeded(start_us)) {
             break;
         }
 
@@ -777,5 +802,6 @@ void AP_Proximity_RPLidarA2::handle_express_data()
         _express_stream_len = remaining;
     }
 }
+#endif // AP_PROXIMITY_RPLIDAR_EXPRESSSCAN_ENABLED
 
 #endif // AP_PROXIMITY_RPLIDARA2_ENABLED

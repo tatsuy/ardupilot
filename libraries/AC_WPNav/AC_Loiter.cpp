@@ -382,9 +382,24 @@ void AC_Loiter::calc_desired_velocity(bool avoidance_on)
         // TODO: We need to also limit the _desired_accel_ne_mss
         AC_Avoid *_avoid = AP::ac_avoid();
         if (_avoid != nullptr) {
+            const Vector2f vel_before_avoid_ne_ms = desired_vel_ne_ms;
             Vector3f avoidance_vel_ned_cms{desired_vel_ne_ms.x * 100.0, desired_vel_ne_ms.y * 100.0, 0.0f};
             _avoid->adjust_velocity(avoidance_vel_ned_cms, _pos_control.NE_get_pos_p().kP(), _accel_max_ne_mss * 100.0, _pos_control.D_get_pos_p().kP(), _pos_control.D_get_max_accel_mss() * 100.0, dt_s);
             desired_vel_ne_ms = avoidance_vel_ned_cms.xy() * 0.01;
+
+            // Avoidance only limits velocity. Remove the pilot acceleration feed-forward component that
+            // points in the direction avoidance removed velocity from (i.e. towards the obstacle/fence),
+            // otherwise the position controller is still pushed into the obstacle by the feed-forward.
+            const Vector2f removed_vel_ne_ms = vel_before_avoid_ne_ms - desired_vel_ne_ms;
+            if (!removed_vel_ne_ms.is_zero()) {
+                const Vector2f limit_dir = removed_vel_ne_ms.normalized();
+                const float accel_along_limit_mss = _desired_accel_ne_mss.dot(limit_dir);
+                if (is_positive(accel_along_limit_mss)) {
+                    _desired_accel_ne_mss -= limit_dir * accel_along_limit_mss;
+                }
+                // remember the direction avoidance is limiting in, for the position-target clamp below
+                _avoid_limit_dir_ne = limit_dir;
+            }
         }
     }
 #endif // !APM_BUILD_ArduPlane
@@ -394,6 +409,19 @@ void AC_Loiter::calc_desired_velocity(bool avoidance_on)
 
     // Integrate velocity to update desired position
     desired_pos_ned_m += (desired_vel_ne_ms * dt_s).topostype();
+
+    // While avoidance is limiting, do not let the position target run ahead of the vehicle towards the
+    // obstacle. Avoidance limits the velocity from the distance measured at the vehicle, but that velocity
+    // is integrated into a target the vehicle lags behind; the accumulated lead would otherwise carry the
+    // vehicle past the margin after avoidance has already stopped the velocity target.
+    if (!_avoid_limit_dir_ne.is_zero()) {
+        const Vector2f lead_ne_m = (_pos_control.get_pos_target_NED_m().xy() - _pos_control.get_pos_estimate_NED_m().xy()).tofloat();
+        const float lead_m = lead_ne_m.dot(_avoid_limit_dir_ne);
+        if (is_positive(lead_m)) {
+            desired_pos_ned_m -= (_avoid_limit_dir_ne * lead_m).topostype();
+        }
+        _avoid_limit_dir_ne.zero();
+    }
 
     // Send updated position, velocity, and acceleration to the position controller
     _pos_control.set_pos_vel_accel_NE_m(desired_pos_ned_m, desired_vel_ne_ms, _desired_accel_ne_mss);

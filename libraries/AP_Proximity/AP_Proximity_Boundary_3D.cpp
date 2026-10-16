@@ -162,6 +162,9 @@ void AP_Proximity_Boundary_3D::update_boundary(const Face &face)
     } else if (_distance_valid[layer][sector]) {
         shortest_distance = _filtered_distance[layer][sector].get();
     }
+    if (shortest_distance < PROXIMITY_BOUNDARY_DIST_MIN) {
+        shortest_distance = PROXIMITY_BOUNDARY_DIST_MIN;
+    }
     _boundary_points[layer][prev_sector] = _sector_edge_vector[layer][prev_sector] * shortest_distance;
 
     // if the sector counter-clockwise from the previous sector has an invalid distance, set boundary to create a cup-like boundary

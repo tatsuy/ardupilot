@@ -24,7 +24,7 @@
 #define PROXIMITY_MIDDLE_LAYER        2       // middle layer
 #define PROXIMITY_PITCH_WIDTH_DEG     30      // width between each layer in degrees
 #define PROXIMITY_SECTOR_WIDTH_DEG    (360.0f/PROXIMITY_NUM_SECTORS)   // width of sectors in degrees
-#define PROXIMITY_BOUNDARY_DIST_MIN   0.6f    // minimum distance for a boundary point.  This ensures the object avoidance code doesn't think we are outside the boundary.
+#define PROXIMITY_BOUNDARY_DIST_MIN   0.3f    // minimum distance for a boundary point.  This ensures the object avoidance code doesn't think we are outside the boundary.
 #define PROXIMITY_BOUNDARY_DIST_DEFAULT 100   // if we have no data for a sector, boundary is placed 100m out
 #define PROXIMITY_FILT_RESET_TIME     1000    // reset filter if last distance was pushed more than this many ms away
 #define PROXIMITY_FACE_RESET_MS       1000    // face will be reset if not updated within this many ms

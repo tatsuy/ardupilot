@@ -131,6 +131,7 @@ protected:
     Vector2f    _desired_accel_ne_mss;      // Pilot-requested horizontal acceleration in m/s² (after smoothing), in the NE (horizontal) frame.
     Vector2f    _predicted_accel_ne_mss;    // Predicted acceleration in m/s² based on internal rate shaping of pilot input.
     Vector2f    _predicted_euler_angle_rad; // Predicted roll/pitch angles (in radians) used for rate shaping of pilot input.
+    Vector2f    _avoid_limit_dir_ne;        // Unit vector of the direction avoidance removed velocity in this loop (zero if none)
     Vector2f    _predicted_euler_rate;      // Predicted roll/pitch angular rates (in rad/s) for pilot acceleration shaping.
     Vector2f    _predicted_euler_accel;     // Predicted roll/pitch angular rates (in rad/s) for pilot acceleration shaping.
     uint32_t    _brake_timer_ms;            // Timestamp (in ms) when braking logic was last triggered (sticks released).

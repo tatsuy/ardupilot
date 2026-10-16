@@ -1,0 +1,144 @@
+{
+ "c123_s1167_f0.25_AVOID_BACKUP_SPD0": {
+  "T1": {
+   "min_d": 0.432,
+   "t_min": 11.363000000000007,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": true,
+   "t_breach": 10.881,
+   "backout_s": 1.7080000000000055,
+   "below_margin_s": 1.28
+  },
+  "REL": {
+   "min_d": 0.532,
+   "t_min": 0.0,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": false,
+   "backout_s": null,
+   "below_margin_s": 0.0
+  },
+  "T2": {
+   "min_d": 0.532,
+   "t_min": 0.0,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": false,
+   "backout_s": null,
+   "below_margin_s": 0.0
+  }
+ },
+ "c123_s1167_f0_AVOID_BACKUP_SPD0": {
+  "T1": {
+   "min_d": 0.532,
+   "t_min": 16.304000000000002,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": false,
+   "backout_s": null,
+   "below_margin_s": 0.0
+  },
+  "REL": {
+   "min_d": 0.532,
+   "t_min": 0.0,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": false,
+   "backout_s": null,
+   "below_margin_s": 0.0
+  },
+  "T2": {
+   "min_d": 0.532,
+   "t_min": 0.0,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": false,
+   "backout_s": null,
+   "below_margin_s": 0.0
+  }
+ },
+ "c123_s1333_f0.25_AVOID_BACKUP_SPD0": {
+  "T1": {
+   "min_d": 0.499,
+   "t_min": 12.072999999999993,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": true,
+   "t_breach": 12.072999999999993,
+   "backout_s": 0.355000000000004,
+   "below_margin_s": 1.18
+  },
+  "REL": {
+   "min_d": 0.532,
+   "t_min": 0.0,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": false,
+   "backout_s": null,
+   "below_margin_s": 0.0
+  },
+  "T2": {
+   "min_d": 0.532,
+   "t_min": 0.0,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": false,
+   "backout_s": null,
+   "below_margin_s": 0.0
+  }
+ },
+ "c123_s1333_f0_AVOID_BACKUP_SPD0": {
+  "T1": {
+   "min_d": 0.532,
+   "t_min": 21.163000000000004,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": false,
+   "backout_s": null,
+   "below_margin_s": 0.0
+  },
+  "REL": {
+   "min_d": 0.532,
+   "t_min": 0.0,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": false,
+   "backout_s": null,
+   "below_margin_s": 0.0
+  },
+  "T2": {
+   "min_d": 0.532,
+   "t_min": 0.0,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": false,
+   "backout_s": null,
+   "below_margin_s": 0.0
+  }
+ }
+}

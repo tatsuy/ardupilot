@@ -1,0 +1,41 @@
+diff --git a/libraries/AC_WPNav/AC_Loiter.cpp b/libraries/AC_WPNav/AC_Loiter.cpp
+--- a/libraries/AC_WPNav/AC_Loiter.cpp
++++ b/libraries/AC_WPNav/AC_Loiter.cpp
+@@ -399,6 +399,8 @@ void AC_Loiter::calc_desired_velocity(bool avoidance_on)
+                 if (is_positive(accel_along_limit_mss)) {
+                     _desired_accel_ne_mss -= limit_dir * accel_along_limit_mss;
+                 }
++                // remember the direction avoidance is limiting in, for the position-target clamp below
++                _avoid_limit_dir_ne = limit_dir;
+             }
+         }
+     }
+@@ -410,6 +412,19 @@ void AC_Loiter::calc_desired_velocity(bool avoidance_on)
+     // Integrate velocity to update desired position
+     desired_pos_ned_m += (desired_vel_ne_ms * dt_s).topostype();
+
++    // While avoidance is limiting, do not let the position target run ahead of the vehicle towards the
++    // obstacle. Avoidance limits the velocity from the distance measured at the vehicle, but that velocity
++    // is integrated into a target the vehicle lags behind; the accumulated lead would otherwise carry the
++    // vehicle past the margin after avoidance has already stopped the velocity target.
++    if (!_avoid_limit_dir_ne.is_zero()) {
++        const Vector2f lead_ne_m = (_pos_control.get_pos_target_NED_m().xy() - _pos_control.get_pos_estimate_NED_m().xy()).tofloat();
++        const float lead_m = lead_ne_m.dot(_avoid_limit_dir_ne);
++        if (is_positive(lead_m)) {
++            desired_pos_ned_m -= (_avoid_limit_dir_ne * lead_m).topostype();
++        }
++        _avoid_limit_dir_ne.zero();
++    }
++
+     // Send updated position, velocity, and acceleration to the position controller
+     _pos_control.set_pos_vel_accel_NE_m(desired_pos_ned_m, desired_vel_ne_ms, _desired_accel_ne_mss);
+ }
+diff --git a/libraries/AC_WPNav/AC_Loiter.h b/libraries/AC_WPNav/AC_Loiter.h
+--- a/libraries/AC_WPNav/AC_Loiter.h
++++ b/libraries/AC_WPNav/AC_Loiter.h
+@@ -131,4 +131,5 @@
+     Vector2f    _desired_accel_ne_mss;      // Pilot-requested horizontal acceleration in m/s² (after smoothing), in the NE (horizontal) frame.
+     Vector2f    _predicted_accel_ne_mss;    // Predicted acceleration in m/s² based on internal rate shaping of pilot input.
+     Vector2f    _predicted_euler_angle_rad; // Predicted roll/pitch angles (in radians) used for rate shaping of pilot input.
++    Vector2f    _avoid_limit_dir_ne;        // Unit vector of the direction avoidance removed velocity in this loop (zero if none)
+     Vector2f    _predicted_euler_rate;      // Predicted roll/pitch angular rates (in rad/s) for pilot acceleration shaping.

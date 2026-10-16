@@ -1,0 +1,168 @@
+{
+ "args": {
+  "binary": "/home/user/ardupilot/prx_test/arducopter_v42",
+  "defaults": "/home/user/ardupilot-4.2/Tools/autotest/default_params/copter.parm,/home/user/ardupilot/prx_test/indoor_42.parm,/home/user/ardupilot/prx_test/out/v42/v42_s1167_f0/extra.parm",
+  "outdir": "/home/user/ardupilot/prx_test/out/v42/v42_s1167_f0",
+  "home": [
+   -35.363261,
+   149.16523,
+   584.0,
+   0.0
+  ],
+  "speedup": 1.0,
+  "instance": 1,
+  "vicon_arg": "--uartF=sim:vicon:",
+  "param": [
+   "PRX_FILT=0"
+  ],
+  "alt": 1.5,
+  "wall_n": 7.0,
+  "margin": 0.5,
+  "rate": 15.0,
+  "delay": 0.0,
+  "noise": 0.0,
+  "fov": 360.0,
+  "dropout": 0.0,
+  "min_dist": 0.2,
+  "max_dist": 12.0,
+  "under_min": "raw",
+  "seed": 1,
+  "stick_pwm": 1167,
+  "t1": 30.0,
+  "rel": 8.0,
+  "t2": 20.0,
+  "hold_window": 6.0
+ },
+ "metrics": {
+  "T1": {
+   "min_d": 0.499,
+   "t_min": 10.614,
+   "hold_mean": 0.499,
+   "hold_min": 0.499,
+   "hold_max": 0.499,
+   "osc_pp": 0.0,
+   "breach": true,
+   "t_breach": 10.614,
+   "backout_s": null,
+   "below_margin_s": 15.24
+  },
+  "REL": {
+   "min_d": 0.499,
+   "t_min": 0.0,
+   "hold_mean": 0.7421,
+   "hold_min": 0.532,
+   "hold_max": 1.189,
+   "osc_pp": 0.657,
+   "breach": true,
+   "t_breach": 0.0,
+   "backout_s": 0.32100000000000506,
+   "below_margin_s": 0.24
+  },
+  "T2": {
+   "min_d": -22.244,
+   "t_min": 19.971999999999994,
+   "hold_mean": -18.438068085106384,
+   "hold_min": -22.244,
+   "hold_max": -14.663,
+   "osc_pp": 7.5809999999999995,
+   "breach": true,
+   "t_breach": 0.2710000000000008,
+   "backout_s": null,
+   "below_margin_s": 15.34
+  }
+ },
+ "statustext": [
+  [
+   0.7053399085998535,
+   "Barometer 1 calibration complete"
+  ],
+  [
+   0.7054166793823242,
+   "Barometer 2 calibration complete"
+  ],
+  [
+   1.2336218357086182,
+   "ArduPilot Ready"
+  ],
+  [
+   1.2336938381195068,
+   "AHRS: DCM active"
+  ],
+  [
+   1.6285357475280762,
+   "SaveWaypoint MIDDLE"
+  ],
+  [
+   3.234666347503662,
+   "EKF3 IMU0 initialised"
+  ],
+  [
+   3.23476243019104,
+   "EKF3 IMU1 initialised"
+  ],
+  [
+   3.2348296642303467,
+   "AHRS: EKF3 active"
+  ],
+  [
+   4.355138301849365,
+   "EKF3 IMU0 tilt alignment complete"
+  ],
+  [
+   4.355646371841431,
+   "EKF3 IMU1 tilt alignment complete"
+  ],
+  [
+   4.4193620681762695,
+   "EKF3 IMU0 is using external nav data"
+  ],
+  [
+   4.419440269470215,
+   "EKF3 IMU0 initial pos NED = 0.0,0.0,-0.1 (m)"
+  ],
+  [
+   4.419473171234131,
+   "EKF3 IMU0 initial vel NED = 0.0,0.0,0.0 (m/s)"
+  ],
+  [
+   4.419518947601318,
+   "EKF3 IMU1 is using external nav data"
+  ],
+  [
+   4.419562339782715,
+   "EKF3 IMU1 initial pos NED = 0.0,0.0,-0.1 (m)"
+  ],
+  [
+   4.419604539871216,
+   "EKF3 IMU1 initial vel NED = 0.0,0.0,0.0 (m/s)"
+  ],
+  [
+   4.442638397216797,
+   "EKF3 IMU0 MAG0 initial yaw alignment complete"
+  ],
+  [
+   4.44274115562439,
+   "EKF3 IMU1 MAG0 initial yaw alignment complete"
+  ],
+  [
+   4.6009931564331055,
+   "EKF3 IMU0 origin set"
+  ],
+  [
+   4.601085901260376,
+   "EKF3 IMU1 origin set"
+  ],
+  [
+   7.372482061386108,
+   "GPS 1: detected as u-blox at 230400 baud"
+  ],
+  [
+   12.604844093322754,
+   "PreArm: check proximity sensor"
+  ],
+  [
+   14.603357791900635,
+   "Arming motors"
+  ]
+ ]
+}

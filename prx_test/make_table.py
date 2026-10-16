@@ -4,9 +4,9 @@ config are shown as 'run1 / run2 ...')"""
 import glob, json, os, sys
 from collections import OrderedDict
 
-NAMES = {'base': '変更前', 'c1': '変更1', 'c2': '変更2', 'c12': '変更1+2'}
+NAMES = {'base': '変更前', 'c1': '変更1', 'c2': '変更2', 'c12': '変更1+2', 'c123': '変更1+2+3', 'v42': '4.2.3 変更前'}
 STICK = {1167: '2/3 (≈20°)', 1333: '1/3 (≈10°)'}
-ORDER = {'base': 0, 'c1': 1, 'c2': 2, 'c12': 3}
+ORDER = {'v42': -1, 'base': 0, 'c1': 1, 'c2': 2, 'c12': 3, 'c123': 4}
 
 def fmt(v, nd=2):
     return '—' if v is None else ('%.' + str(nd) + 'f') % v
@@ -19,6 +19,9 @@ for root in sys.argv[1:]:
         binname = os.path.basename(a['binary']).replace('arducopter_', '')
         filt = [p.split('=')[1] for p in a['param'] if p.startswith('PRX_FILT=')]
         filt = float(filt[0]) if filt else 0.25
+        extra = ' '.join(p for p in a['param'] if not p.startswith('PRX_FILT='))
+        if extra:
+            binname = binname + ' ' + extra
         groups.setdefault((filt, a['stick_pwm'], binname), []).append(m)
 
 def col(ms, ph, fn):
@@ -49,10 +52,10 @@ def t2(fn):
 
 print('| PRX_FILT | スティック | バイナリ | T1 最小距離 [m] | T1 保持距離 (揺れ幅) [m] | T1 後退時間 | REL 保持距離 (揺れ幅) [m] | T2 最小距離 [m] | T2 保持距離 (揺れ幅) [m] | T2 後退時間 |')
 print('|---|---|---|---|---|---|---|---|---|---|')
-for (filt, stick, binname) in sorted(groups, key=lambda k: (k[0], -k[1], ORDER.get(k[2], 9))):
+for (filt, stick, binname) in sorted(groups, key=lambda k: (k[0], -k[1], ORDER.get(k[2].split(' ')[0], 9))):
     ms = groups[(filt, stick, binname)]
     print('| %g | %s | %s | %s | %s | %s | %s | %s | %s | %s |' % (
-        filt, STICK.get(stick, stick), NAMES.get(binname, binname),
+        filt, STICK.get(stick, stick), (NAMES.get(binname.split(' ')[0], binname.split(' ')[0]) + binname[len(binname.split(' ')[0]):]),
         col(ms, 'T1', mind), col(ms, 'T1', hold), col(ms, 'T1', back),
         col(ms, 'REL', hold),
         col(ms, 'T2', t2(mind)), col(ms, 'T2', t2(hold)), col(ms, 'T2', t2(back))))

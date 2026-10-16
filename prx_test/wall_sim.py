@@ -104,7 +104,7 @@ class Runner:
                 f.write("%s %s\n" % tuple(kv.split("=", 1)))
         a.defaults += "," + extra
         cmd = [a.binary, "--model", "quad", "-I%d" % a.instance, "-w", "--speedup", str(a.speedup),
-               "--home", home, "--serial5=sim:vicon:",
+               "--home", home, a.vicon_arg,
                "--defaults", a.defaults]
         self.sitl_log = open(os.path.join(a.outdir, "sitl.log"), "w")
         self.sitl = subprocess.Popen(cmd, cwd=a.outdir, stdout=self.sitl_log, stderr=subprocess.STDOUT)
@@ -280,6 +280,7 @@ def main():
     p.add_argument('--home', type=float, nargs=4, default=[-35.363261, 149.165230, 584.0, 0.0])
     p.add_argument('--speedup', type=float, default=1.0)
     p.add_argument('--instance', type=int, default=0)
+    p.add_argument('--vicon-arg', default='--serial5=sim:vicon:', help='4.2: --uartF=sim:vicon:')
     p.add_argument('--param', action='append', default=[], help='extra NAME=VALUE applied at boot (e.g. PRX_FILT=0)')
     p.add_argument('--alt', type=float, default=1.5)
     p.add_argument('--wall-n', type=float, default=7.0, help='wall plane at N = this many metres from home')

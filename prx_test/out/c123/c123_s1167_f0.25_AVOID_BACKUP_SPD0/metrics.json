@@ -1,0 +1,187 @@
+{
+ "args": {
+  "binary": "/home/user/ardupilot/prx_test/arducopter_c123",
+  "defaults": "/home/user/ardupilot/Tools/autotest/default_params/copter.parm,/home/user/ardupilot/prx_test/indoor.parm,/home/user/ardupilot/prx_test/out/c123/c123_s1167_f0.25_AVOID_BACKUP_SPD0/extra.parm",
+  "outdir": "/home/user/ardupilot/prx_test/out/c123/c123_s1167_f0.25_AVOID_BACKUP_SPD0",
+  "home": [
+   -35.363261,
+   149.16523,
+   584.0,
+   0.0
+  ],
+  "speedup": 1.0,
+  "instance": 2,
+  "vicon_arg": "--serial5=sim:vicon:",
+  "param": [
+   "PRX_FILT=0.25",
+   "AVOID_BACKUP_SPD=0"
+  ],
+  "alt": 1.5,
+  "wall_n": 7.0,
+  "margin": 0.5,
+  "rate": 15.0,
+  "delay": 0.0,
+  "noise": 0.0,
+  "fov": 360.0,
+  "dropout": 0.0,
+  "min_dist": 0.2,
+  "max_dist": 12.0,
+  "under_min": "raw",
+  "seed": 1,
+  "stick_pwm": 1167,
+  "t1": 30.0,
+  "rel": 8.0,
+  "t2": 20.0,
+  "hold_window": 6.0
+ },
+ "metrics": {
+  "T1": {
+   "min_d": 0.432,
+   "t_min": 11.363000000000007,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": true,
+   "t_breach": 10.881,
+   "backout_s": 1.7080000000000055,
+   "below_margin_s": 1.28
+  },
+  "REL": {
+   "min_d": 0.532,
+   "t_min": 0.0,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": false,
+   "backout_s": null,
+   "below_margin_s": 0.0
+  },
+  "T2": {
+   "min_d": 0.532,
+   "t_min": 0.0,
+   "hold_mean": 0.532,
+   "hold_min": 0.532,
+   "hold_max": 0.532,
+   "osc_pp": 0.0,
+   "breach": false,
+   "backout_s": null,
+   "below_margin_s": 0.0
+  }
+ },
+ "statustext": [
+  [
+   0.8805341720581055,
+   "Barometer 1 calibration complete"
+  ],
+  [
+   0.8807356357574463,
+   "Barometer 2 calibration complete"
+  ],
+  [
+   1.407017469406128,
+   "ArduPilot Ready"
+  ],
+  [
+   1.4071061611175537,
+   "AHRS: DCM active"
+  ],
+  [
+   1.7040715217590332,
+   "RC7: SaveWaypoint MIDDLE"
+  ],
+  [
+   3.40606951713562,
+   "EKF3 IMU0 initialised"
+  ],
+  [
+   3.406208038330078,
+   "EKF3 IMU1 initialised"
+  ],
+  [
+   3.4119484424591064,
+   "AHRS: EKF3 active"
+  ],
+  [
+   4.620629549026489,
+   "EKF3 IMU0 tilt alignment complete"
+  ],
+  [
+   4.620712757110596,
+   "EKF3 IMU1 tilt alignment complete"
+  ],
+  [
+   4.691640377044678,
+   "EKF3 IMU0 is using external nav data"
+  ],
+  [
+   4.691777467727661,
+   "EKF3 IMU0 initial pos NED = 0.0,0.0,-0.1 (m)"
+  ],
+  [
+   4.691808223724365,
+   "EKF3 IMU0 initial vel NED = 0.0,0.0,0.0 (m/s)"
+  ],
+  [
+   4.691834449768066,
+   "EKF3 IMU1 is using external nav data"
+  ],
+  [
+   4.691859722137451,
+   "EKF3 IMU1 initial pos NED = 0.0,0.0,-0.1 (m)"
+  ],
+  [
+   4.691924095153809,
+   "EKF3 IMU1 initial vel NED = 0.0,0.0,0.0 (m/s)"
+  ],
+  [
+   4.714940071105957,
+   "EKF3 IMU0 MAG0 initial yaw alignment complete"
+  ],
+  [
+   4.715124130249023,
+   "EKF3 IMU1 MAG0 initial yaw alignment complete"
+  ],
+  [
+   5.073845148086548,
+   "EKF3 IMU0 origin set"
+  ],
+  [
+   5.073911190032959,
+   "EKF3 IMU1 origin set"
+  ],
+  [
+   5.103090524673462,
+   "Field Elevation Set: 584m"
+  ],
+  [
+   13.074416160583496,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   13.074560165405273,
+   "Arm: PRX1: No Data"
+  ],
+  [
+   15.076907396316528,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   17.07800841331482,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   19.088098287582397,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   21.104265689849854,
+   "Arm: Gyros inconsistent"
+  ],
+  [
+   23.10732340812683,
+   "Arming motors"
+  ]
+ ]
+}

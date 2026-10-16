@@ -1,0 +1,74 @@
+heartbeat from sys 1
+waiting for EKF/vision position and ready-to-arm ...
+  STATUSTEXT: Barometer 1 calibration complete
+  STATUSTEXT: Barometer 2 calibration complete
+  STATUSTEXT: ArduPilot Ready
+  STATUSTEXT: AHRS: DCM active
+  STATUSTEXT: RC7: SaveWaypoint MIDDLE
+  STATUSTEXT: EKF3 IMU0 initialised
+  STATUSTEXT: EKF3 IMU1 initialised
+  STATUSTEXT: AHRS: EKF3 active
+  STATUSTEXT: EKF3 IMU0 tilt alignment complete
+  STATUSTEXT: EKF3 IMU1 tilt alignment complete
+  STATUSTEXT: EKF3 IMU0 is using external nav data
+  STATUSTEXT: EKF3 IMU0 initial pos NED = 0.0,0.0,-0.1 (m)
+  STATUSTEXT: EKF3 IMU0 initial vel NED = 0.0,0.0,0.0 (m/s)
+  STATUSTEXT: EKF3 IMU1 is using external nav data
+  STATUSTEXT: EKF3 IMU1 initial pos NED = 0.0,0.0,-0.1 (m)
+  STATUSTEXT: EKF3 IMU1 initial vel NED = 0.0,0.0,0.0 (m/s)
+  STATUSTEXT: EKF3 IMU0 MAG0 initial yaw alignment complete
+  STATUSTEXT: EKF3 IMU1 MAG0 initial yaw alignment complete
+  STATUSTEXT: EKF3 IMU0 origin set
+  STATUSTEXT: EKF3 IMU1 origin set
+  STATUSTEXT: Field Elevation Set: 584m
+  STATUSTEXT: Arm: Gyros inconsistent
+  STATUSTEXT: Arm: PRX1: No Data
+  STATUSTEXT: Arm: Gyros inconsistent
+  STATUSTEXT: Arm: Gyros inconsistent
+  STATUSTEXT: Arm: Gyros inconsistent
+  STATUSTEXT: Arm: Gyros inconsistent
+  STATUSTEXT: Arming motors
+armed, mode=LOITER  t=25.1
+airborne alt=2.07  d_wall=7.00
+phase T1  pitch=1333 for 20s  (d=7.00)
+phase REL pitch=1500 for 2s  (d=0.47)
+phase T2  pitch=1333 for 2s  (d=0.81)
+phase END pitch=1500 for 4s  (d=-0.00)
+{
+ "T1": {
+  "min_d": 0.265,
+  "t_min": 12.661999999999999,
+  "hold_mean": 0.503090909090909,
+  "hold_min": 0.421,
+  "hold_max": 0.666,
+  "osc_pp": 0.24500000000000005,
+  "breach": true,
+  "t_breach": 11.881,
+  "backout_s": 2.1609999999999943,
+  "below_margin_s": 4.5
+ },
+ "REL": {
+  "min_d": 0.466,
+  "t_min": 0.0,
+  "hold_mean": 0.6403846153846154,
+  "hold_min": 0.466,
+  "hold_max": 0.811,
+  "osc_pp": 0.34500000000000003,
+  "breach": true,
+  "t_breach": 0.0,
+  "backout_s": 0.6099999999999994,
+  "below_margin_s": 0.46
+ },
+ "T2": {
+  "min_d": -0.002,
+  "t_min": 1.9809999999999945,
+  "hold_mean": 0.4445769230769231,
+  "hold_min": -0.002,
+  "hold_max": 0.811,
+  "osc_pp": 0.8130000000000001,
+  "breach": true,
+  "t_breach": 0.9799999999999969,
+  "backout_s": null,
+  "below_margin_s": 0.8200000000000001
+ }
+}

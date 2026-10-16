@@ -1,0 +1,11 @@
+# build outputs and bulky SITL results (CSV/BIN logs); metrics.json and table.md are kept
+arducopter_*
+out/*/*/truth.csv
+out/*/*/logs/
+out/*/*/sitl.log
+out/*/*/extra.parm
+out/*/*.log
+out/*/eeprom.bin
+out/*/*/eeprom.bin
+out/*/*/terrain/
+out/trial/

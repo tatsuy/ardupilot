@@ -239,6 +239,15 @@ void AP_Logger::handle_log_sending()
     #else
         num_sends = 10;
     #endif
+    } else {
+        // no flow control, but a fast link (e.g. a companion computer
+        // on a high baudrate UART). A single LOG_DATA per loop cannot
+        // fill a link faster than ~400kbaud, so send more per loop and
+        // let the uart txspace check in handle_log_send_data() throttle
+        const AP_HAL::UARTDriver *uart = _log_sending_link->get_uart();
+        if (uart != nullptr && uart->get_baud_rate() >= 921600) {
+            num_sends = 10;
+        }
     }
 #endif
 

@@ -6,6 +6,12 @@ extern const AP_HAL::HAL& hal;
 
 // Default waypoint navigation constraints
 #define WP_SPD_DEFAULT          10.0f   // default horizontal speed between waypoints (m/s)
+#define WPNAV_TURN_PREDICT_PERIOD_MS        20      // how often the corner turn-rate prediction runs (ms)
+#define WPNAV_TURN_PREDICT_DT               0.05f   // time step used when predicting the path ahead (s)
+#define WPNAV_TURN_PREDICT_STEPS            80      // number of prediction steps (80 x 0.05s = 4s look ahead)
+#define WPNAV_TURN_PREDICT_ACCEL_FRACTION   0.25f   // fraction of WP_ACC assumed available for slowing ahead of a corner
+#define WPNAV_TURN_PREDICT_SPEED_MIN_MS     0.02f   // below this speed the turn rate is not evaluated (m/s)
+#define WPNAV_TURN_SCALAR_MIN               0.05f   // lower limit of the corner speed scalar
 #define WP_SPD_MIN              0.01f   // minimum horizontal speed allowed (m/s)
 #define WP_RADIUS_M_DEFAULT     2.0f    // default radius within which a waypoint is considered reached (m)
 #define WP_RADIUS_M_MIN         0.05f   // minimum allowable waypoint radius (m)
@@ -109,6 +115,15 @@ const AP_Param::GroupInfo AC_WPNav::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("ACC_CNR", 20, AC_WPNav, _wp_accel_c_mss, 0.0),
 
+    // @Param: TURN_RATE
+    // @DisplayName: Waypoint maximum path turn rate
+    // @Description: Maximum rate in deg/s at which the direction of travel may rotate while following a waypoint path. When positive the vehicle slows down ahead of and through corners (the shape of the path is unchanged) so that the heading, when it follows the path (e.g. WP_YAW_BEHAVIOR=1), never has to turn faster than this. Set at or slightly below ATC_RATE_WPY_MAX so the yaw target can keep up with the path. 0 disables the limit.
+    // @Units: deg/s
+    // @Range: 0 180
+    // @Increment: 1
+    // @User: Advanced
+    AP_GROUPINFO("TURN_RATE", 21, AC_WPNav, _wp_turn_rate_max_degs, 0.0),
+
     AP_GROUPEND
 };
 
@@ -174,6 +189,7 @@ AC_WPNav::AC_WPNav(const AP_AHRS_View& ahrs, AC_PosControl& pos_control, const A
     // init flags
     _flags.reached_destination = false;
     _flags.fast_waypoint = false;
+    _turn_speed_scalar = 1.0f;
 
     // record WP_SPD, WP_SPD_UP, WP_SPD_DN values so we can detect changes
     _last_wp_speed_ms = _wp_speed_ms;
@@ -259,6 +275,7 @@ void AC_WPNav::wp_and_spline_init_m(float speed_ms, Vector3p stopping_point_ned_
     // initialise velocity profile for terrain margin shaping
     _offset_vel_ms = _wp_desired_speed_ne_ms;
     _offset_accel_mss = 0.0;
+    _turn_speed_scalar = 1.0f;
     _paused = false;
 
     // mark as active
@@ -563,9 +580,12 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
     float vel_dt_scalar = 1.0;
     if (is_positive(_wp_desired_speed_ne_ms)) {
         update_vel_accel(_offset_vel_ms, _offset_accel_mss, dt, 0.0, 0.0);
-        const float vel_input_ms = !_paused ? _wp_desired_speed_ne_ms * offset_d_scalar : 0.0;
+        // slow the progression along the path in corners so the path turn rate stays below WP_TURN_RATE
+        const float vel_input_ms = !_paused ? _wp_desired_speed_ne_ms * offset_d_scalar * _turn_speed_scalar : 0.0;
         shape_vel_accel(vel_input_ms, 0.0, _offset_vel_ms, _offset_accel_mss, -get_wp_acceleration_mss(), get_wp_acceleration_mss(),
                         _pos_control.get_shaping_jerk_NE_msss(), dt, true);
+        // never allow the shaped speed to run the track backwards (the shaping can undershoot a falling input)
+        _offset_vel_ms = MAX(_offset_vel_ms, 0.0f);
         vel_dt_scalar = _offset_vel_ms / _wp_desired_speed_ne_ms;
     }
 
@@ -584,7 +604,11 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
         // update target position, velocity and acceleration
         target_pos_ned_m = _origin_ned_m;
         s_finished = _scurve_this_leg.advance_target_along_track(_scurve_prev_leg, _scurve_next_leg, _wp_radius_m, get_corner_acceleration_mss(), _flags.fast_waypoint, _track_dt_scalar * vel_dt_scalar * dt, target_pos_ned_m, target_vel_ned_ms, target_accel_ned_mss);
+        // look ahead along the path and update the corner speed scalar used on the next iteration
+        update_turn_rate_speed_limit(target_pos_ned_m, target_vel_ned_ms);
     } else {
+        // the corner speed limit is only applied to s-curve legs
+        _turn_speed_scalar = 1.0f;
         // splinetarget_vel
         target_vel_ned_ms = curr_target_vel_ned_ms;
         _spline_this_leg.advance_target_along_track(_track_dt_scalar * vel_dt_scalar * dt, target_pos_ned_m, target_vel_ned_ms);
@@ -623,6 +647,85 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
 
     // successfully advanced along track
     return true;
+}
+
+// Predicts the path ahead (current leg blended with the next) and updates _turn_speed_scalar so that
+// the turn rate of the direction of travel never exceeds WP_TURN_RATE.
+// The s-curve corner is a superposition of this leg's deceleration and the next leg's acceleration, which
+// produces a turn rate of roughly 2/(jerk phase duration) regardless of speed, so the only way to bound it
+// is to stretch time through the corner. Scaling the progression along the track scales velocity by k and
+// acceleration by k^2 (plus the tangential term handled by _offset_accel_mss), so the turn rate scales by k
+// while the geometry of the path (and therefore the distance to the corner) is unchanged. This lets the
+// required deceleration be planned against path distance like a conventional curvature speed limit.
+void AC_WPNav::update_turn_rate_speed_limit(const Vector3p &target_pos_ned_m, const Vector3f &target_vel_ned_ms)
+{
+    const float turn_rate_max_rads = radians(_wp_turn_rate_max_degs.get());
+    if (!is_positive(turn_rate_max_rads) || !is_positive(_wp_desired_speed_ne_ms) || _this_leg_is_spline) {
+        _turn_speed_scalar = 1.0f;
+        return;
+    }
+
+    // the prediction steps copies of the s-curves forward in time so limit how often it runs
+    const uint32_t now_ms = AP_HAL::millis();
+    if (now_ms - _turn_predict_last_ms < WPNAV_TURN_PREDICT_PERIOD_MS) {
+        return;
+    }
+    _turn_predict_last_ms = now_ms;
+
+    const float speed_now_ms = target_vel_ned_ms.xy().length();
+    if (speed_now_ms < WPNAV_TURN_PREDICT_SPEED_MIN_MS) {
+        _turn_speed_scalar = 1.0f;
+        return;
+    }
+
+    // work on copies so the real legs are not advanced
+    SCurve prev_leg = _scurve_prev_leg;
+    SCurve this_leg = _scurve_this_leg;
+    SCurve next_leg = _scurve_next_leg;
+
+    // deceleration available for slowing ahead of a corner. A fraction of WP_ACC is used because the
+    // speed scalar is input-shaped (acceleration and jerk limited) and so can only follow a gentle
+    // deceleration profile, and the shaping lag (acceleration / jerk) is converted into a distance that
+    // brings the start of the deceleration forward.
+    const float accel_dec_mss = get_wp_acceleration_mss() * WPNAV_TURN_PREDICT_ACCEL_FRACTION;
+    const float shaping_jerk_msss = MAX(_pos_control.get_shaping_jerk_NE_msss(), 0.1f);
+    const float lag_dist_m = speed_now_ms * (get_wp_acceleration_mss() / shaping_jerk_msss + WPNAV_TURN_PREDICT_PERIOD_MS * 0.001f);
+
+    Vector2f last_pos_ne_m = target_pos_ned_m.xy().tofloat();
+    float dist_m = 0.0f;
+    float speed_allowed_now_ms = speed_now_ms;
+    for (uint8_t i = 0; i < WPNAV_TURN_PREDICT_STEPS; i++) {
+        Vector3p pos_ned_m = _origin_ned_m;
+        Vector3f vel_ned_ms, accel_ned_mss;
+        const bool this_leg_finished = this_leg.advance_target_along_track(prev_leg, next_leg, _wp_radius_m, get_corner_acceleration_mss(), _flags.fast_waypoint, WPNAV_TURN_PREDICT_DT, pos_ned_m, vel_ned_ms, accel_ned_mss);
+
+        // path distance from the current target to this sample (unchanged by the time scaling)
+        const Vector2f pos_ne_m = pos_ned_m.xy().tofloat();
+        dist_m += (pos_ne_m - last_pos_ne_m).length();
+        last_pos_ne_m = pos_ne_m;
+
+        const float speed_ms = vel_ned_ms.xy().length();
+        if (speed_ms > WPNAV_TURN_PREDICT_SPEED_MIN_MS) {
+            // turn rate of the direction of travel = lateral acceleration / speed
+            const float accel_lat_mss = fabsf(accel_ned_mss.x * vel_ned_ms.y - accel_ned_mss.y * vel_ned_ms.x) / speed_ms;
+            const float turn_rate_rads = accel_lat_mss / speed_ms;
+            float speed_allowed_ms = speed_ms;
+            if (turn_rate_rads > turn_rate_max_rads) {
+                // slowing to this speed scales the turn rate down to the limit
+                speed_allowed_ms = speed_ms * turn_rate_max_rads / turn_rate_rads;
+            }
+            // speed we may have now and still be able to decelerate to speed_allowed_ms over dist_m
+            const float dist_eff_m = MAX(dist_m - lag_dist_m, 0.0f);
+            speed_allowed_now_ms = MIN(speed_allowed_now_ms, safe_sqrt(sq(speed_allowed_ms) + 2.0f * accel_dec_mss * dist_eff_m));
+        }
+
+        // stop once the turn into the next leg is complete or the path has ended
+        if (next_leg.finished() || (this_leg_finished && !_flags.fast_waypoint)) {
+            break;
+        }
+    }
+
+    _turn_speed_scalar = constrain_float(speed_allowed_now_ms / speed_now_ms, WPNAV_TURN_SCALAR_MIN, 1.0f);
 }
 
 // Updates the current and next path segment to reflect new speed and acceleration limits.

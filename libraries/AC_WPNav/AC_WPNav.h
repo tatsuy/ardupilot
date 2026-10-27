@@ -362,6 +362,7 @@ protected:
     AP_Float    _wp_accel_z_mss;    // maximum vertical acceleration in m/s² used during climb or descent
     AP_Float    _wp_jerk_msss;      // maximum jerk in m/s³ used for s-curve trajectory shaping
     AP_Float    _terrain_margin_m;  // minimum altitude margin in meters when terrain following is active
+    AP_Float    _wp_turn_rate_max_degs; // maximum turn rate of the path in deg/s (0 = no limit); vehicle slows in corners to respect it
 
     // WP_SPD param change checker
     bool _check_wp_speed_change;    // true if WP_SPD should be monitored for changes during flight
@@ -394,6 +395,14 @@ protected:
     float _offset_vel_ms;                // filtered horizontal speed target (used for terrain following or pause handling)
     float _offset_accel_mss;             // filtered horizontal acceleration target (used for terrain following or pause handling)
     bool _paused;                        // true if waypoint controller is paused
+    float _turn_speed_scalar;            // speed scalar (0.0-1.0) applied to slow the vehicle through corners so the path turn rate stays below WP_TURN_RATE
+    uint32_t _turn_predict_last_ms;      // timestamp of the last turn-rate prediction
+
+    // Predicts the path ahead (current leg blended with the next) and updates _turn_speed_scalar so that
+    // the turn rate of the direction of travel never exceeds WP_TURN_RATE. The path geometry is unchanged;
+    // only the progression along it is slowed, starting early enough to decelerate before the corner.
+    // target_pos_ned_m and target_vel_ned_ms are the unscaled s-curve target position and velocity.
+    void update_turn_rate_speed_limit(const Vector3p &target_pos_ned_m, const Vector3f &target_vel_ned_ms);
 
     // terrain following state
     bool _is_terrain_alt;               // true if altitude values are relative to terrain height, false if relative to EKF origin
